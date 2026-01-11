@@ -20,19 +20,20 @@ def apply_elite_styling():
             color: #ffffff !important;
         }}
         
-        /* 2. FORCE DARK BACKGROUND FOR INPUT BOXES (Fixes White-on-White) */
-        input, textarea, [data-baseweb="input"], [data-baseweb="select"] {{
-            background-color: rgba(0, 0, 0, 0.6) !important;
+        /* 2. FIX WHITE-ON-WHITE: FORCED DARK BACKGROUND FOR INPUTS */
+        input, textarea, [data-baseweb="input"], [data-baseweb="select"], .stTextInput>div>div>input {{
+            background-color: #121212 !important;
             color: #ffffff !important;
             border: 1px solid #00ab4e !important;
+            border-radius: 8px !important;
         }}
         
-        /* 3. INPUT LABELS */
+        /* 3. INPUT LABELS & PLACEHOLDERS */
         label, [data-testid="stWidgetLabel"] p {{
             color: #ffffff !important;
             font-weight: 700 !important;
-            font-size: 1.1rem !important;
         }}
+        ::placeholder {{ color: #888888 !important; }}
 
         /* 4. CINEMATIC BACKGROUND */
         .stApp {{
@@ -42,7 +43,7 @@ def apply_elite_styling():
 
         /* 5. NAVIGATION TABS */
         button[data-baseweb="tab"] {{ background-color: transparent !important; border: none !important; }}
-        button[data-baseweb="tab"] div {{ color: white !important; font-weight: 700 !important; font-size: 1.1rem !important; }}
+        button[data-baseweb="tab"] div {{ color: white !important; font-weight: 700 !important; }}
         button[data-baseweb="tab"][aria-selected="true"] {{ border-bottom: 3px solid #00ab4e !important; }}
         
         /* 6. CARDS & BUTTONS */
@@ -53,7 +54,7 @@ def apply_elite_styling():
         }}
         .stButton>button {{ 
             border-radius: 50px !important; border: 2px solid #00ab4e !important; 
-            color: white !important; background: rgba(0, 171, 78, 0.2) !important; font-weight: 700 !important;
+            color: white !important; background: rgba(0, 171, 78, 0.2) !important;
         }}
         .stButton>button:hover {{ background: #00ab4e !important; }}
     </style>
@@ -66,14 +67,14 @@ try:
     if "GEMINI_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
     else:
-        st.warning("⚠️ AI Brain Offline: GEMINI_API_KEY missing from Secrets.")
+        st.warning("⚠️ AI Offline: GEMINI_API_KEY missing from Secrets.")
 except Exception as e:
     st.error(f"AI Connection Failed: {e}")
 
 # --- 3. DATA PERSISTENCE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
-    st.session_state.roadmap = {"2": [{"date": "2026-01-11", "category": "Health", "note": "System ready."}]}
+    st.session_state.roadmap = {"2": [{"date": "2026-01-11", "category": "Health", "note": "Initial setup."}]}
 
 # --- 4. NAVIGATION ---
 tabs = ["Home", "Business Offer", "Subscription Plans"]
@@ -86,8 +87,8 @@ with current_tab[0]: # HOME
     st.title("🛡️ ELITE PERFORMANCE")
     if not st.session_state.logged_in:
         st.markdown("### Partner Portal Access")
-        u = st.text_input("Username", placeholder="admin")
-        p = st.text_input("Password", type="password", placeholder="owner2026")
+        u = st.text_input("Username", placeholder="admin", key="user_home")
+        p = st.text_input("Password", type="password", placeholder="owner2026", key="pass_home")
         if st.button("Unlock Elite Portal"):
             if u == "admin" and p == "owner2026":
                 st.session_state.logged_in = True
@@ -97,39 +98,40 @@ with current_tab[2]: # SUBSCRIPTION
     st.header("Strategic Partnership Tiers")
     p1, p2, p3 = st.columns(3)
     p1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
-    p2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Dual Health/Play Audits<br>Interactive Body Map</p></div>", unsafe_allow_html=True)
+    p2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Full Health/Play Dual Audits</p></div>", unsafe_allow_html=True)
     p3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Custom 3D Scanning</p></div>", unsafe_allow_html=True)
 
 if st.session_state.logged_in:
     with current_tab[3]: # ANALYSIS ENGINE
         st.header("🎥 Live AI Technical Audit")
-        p_num = st.text_input("Target Player Number", "2")
+        p_num = st.text_input("Target Player Number", "2", key="p_num_input")
         video_file = st.file_uploader("Upload Match Clip (MP4/MOV)", type=['mp4', 'mov'])
         if video_file and 'client' in locals():
             st.video(video_file)
             if st.button("Generate Dual-Track Elite Analysis"):
                 with st.status("🤖 AI Processing Video...", expanded=True):
                     try:
-                        # FIX: Save file temporarily to provide a real path for the API
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
                             tmp.write(video_file.getvalue())
                             tmp_path = tmp.name
                         
                         st.write("Securely Uploading to Cloud...")
-                        # Use the correct 'file' parameter for the SDK
                         uploaded_file = client.files.upload(file=tmp_path)
                         
-                        prompt = "Analyze this sports video. 1. HEALTH (injury risk markers like knee valgus). 2. PLAY (tactical improvements like scanning frequency)."
+                        prompt = "Analyze this sports video. 1. HEALTH (injury risk markers like knee valgus). 2. PLAY (tactical improvements)."
                         response = client.models.generate_content(
                             model="gemini-2.0-flash-exp", 
                             contents=[prompt, uploaded_file]
                         )
                         
                         st.session_state.roadmap[p_num].append({"date": "2026-01-11", "category": "AI Audit", "note": response.text})
-                        os.remove(tmp_path) # Clean up
-                        st.success("Audit Complete. Data pushed to Roadmap.")
+                        os.remove(tmp_path)
+                        st.success("Audit Complete. Insights pushed to Roadmap.")
                     except Exception as e:
-                        st.error(f"AI Failure: {e}")
+                        if "429" in str(e):
+                            st.error("🚨 QUOTA EXCEEDED: Google's free AI tier has a limit. Please wait 60 seconds or try a smaller video clip.")
+                        else:
+                            st.error(f"AI Failure: {e}")
 
     with current_tab[4]: # BODY MAP
         st.header("🩺 Biometric Body Map")
