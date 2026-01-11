@@ -1,96 +1,137 @@
 import streamlit as st
-from google import genai
 import plotly.graph_objects as go
 import time, random, string
 
-# --- 1. CONFIGURATION & PERSISTENCE ---
-st.set_page_config(page_title="BioGuard AI | Squad Intelligence", layout="wide")
+# --- 1. SETTINGS & LUXURY THEME ---
+st.set_page_config(page_title="BioGuard AI | Elite Analytics", layout="wide")
 
-# Persistent State for Demo (In Prod, use a Database)
-if "users" not in st.session_state:
-    st.session_state.users = {"admin": {"pass": "owner2026", "role": "Owner", "name": "System Owner"}}
-if "roadmaps" not in st.session_state:
-    st.session_state.roadmaps = {
-        "2": [{"date": "2025-11-30", "issue": "Right Knee", "severity": "High", "note": "12° Valgus detected"}]
-    }
-if "logged_in" not in st.session_state: st.session_state.logged_in = None
-
-# --- 2. THEME & BRANDING ---
-def apply_ui():
-    bg_url = "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=2000"
-    st.markdown(f"""
+def apply_luxury_styling():
+    st.markdown("""
     <style>
-        .stApp {{ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url("{bg_url}"); background-size: cover; color: white; }}
-        .pricing-card {{ background: rgba(22,27,34,0.9); padding: 25px; border-radius: 15px; border: 1px solid #004c97; text-align: center; }}
-        .roadmap-card {{ background: rgba(0, 171, 78, 0.1); padding: 15px; border-radius: 8px; border-left: 5px solid #00ab4e; margin-bottom: 10px; }}
+        /* Modern Dark Luxury Theme */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+        
+        html, body, [class*="st-"] {
+            font-family: 'Inter', sans-serif;
+            color: #E0E0E0;
+        }
+        
+        .stApp {
+            background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), 
+                        url("https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=2000");
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        /* Top Navigation Bar Simulation */
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 3rem;
+        }
+
+        /* Luxury Pricing Cards */
+        .luxury-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .luxury-card:hover {
+            border-color: #00ab4e;
+            background: rgba(255, 255, 255, 0.07);
+            transform: translateY(-5px);
+        }
+
+        /* Typography */
+        h1 { font-weight: 700; letter-spacing: -1px; color: white; margin-bottom: 0.5rem; }
+        .hero-sub { font-weight: 300; font-size: 1.5rem; color: #AAA; margin-bottom: 3rem; }
     </style>
     """, unsafe_allow_html=True)
 
-apply_ui()
+apply_luxury_styling()
 
-# --- 3. COMPONENT: INTERACTIVE BODY MAP ---
-def generate_body_map(issues):
-    # Mapping points to a standard human anatomy diagram
-    coords = {"Right Knee": [180, 550], "Left Knee": [320, 550], "Lower Back": [250, 320]}
-    img_url = "https://i.imgur.com/9Yg0vVb.png" # Standard Medical Outline
-    
-    fig = go.Figure()
-    fig.add_layout_image(dict(source=img_url, xref="x", yref="y", x=0, y=800, sizex=500, sizey=800, sizing="stretch", opacity=0.8, layer="below"))
-    
-    for issue in issues:
-        if issue["issue"] in coords:
-            pos = coords[issue["issue"]]
-            fig.add_trace(go.Scatter(x=[pos[0]], y=[pos[1]], mode='markers', 
-                                     marker=dict(size=20, color="red", line=dict(width=2, color='white')),
-                                     hovertext=f"{issue['issue']}: {issue['note']}"))
+# --- 2. DATA STATE ---
+if "logged_in" not in st.session_state: st.session_state.logged_in = False
+if "roadmaps" not in st.session_state:
+    st.session_state.roadmaps = {"2": [{"date": "2026-01-11", "issue": "Right Knee", "note": "Gait asymmetry detected"}]}
 
-    fig.update_layout(width=350, height=500, margin=dict(l=0,r=0,t=0,b=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-    fig.update_xaxes(visible=False, range=[0, 500]); fig.update_yaxes(visible=False, range=[0, 800])
-    return fig
+# --- 3. THE "LUXURY" HEADER ---
+# This simulates the top-right icon navigation
+col_title, col_nav = st.columns([3, 1])
+with col_title:
+    st.markdown("# 🛡️ BIOGUARD AI")
+with col_nav:
+    if not st.session_state.logged_in:
+        if st.button("👤 Member Login", use_container_width=True):
+            st.session_state.show_login = True
+    else:
+        if st.button("🚪 Logout", use_container_width=True):
+            st.session_state.logged_in = False
+            st.rerun()
 
-# --- 4. AUTHENTICATION ---
-if not st.session_state.logged_in:
-    st.title("🛡️ BioGuard AI")
-    tab1, tab2 = st.tabs(["Sign In", "About Our Business"])
-    with tab1:
+# --- 4. LOGIN OVERLAY (Only shows if clicked) ---
+if hasattr(st.session_state, 'show_login') and st.session_state.show_login and not st.session_state.logged_in:
+    with st.form("login_form"):
+        st.subheader("Partner Access")
         u = st.text_input("Username")
         p = st.text_input("Password", type="password")
-        if st.button("Access Portal"):
-            if u in st.session_state.users and st.session_state.users[u]["pass"] == p:
-                st.session_state.logged_in = u; st.rerun()
-    with tab2:
-        st.write("BioGuard AI provides automated biomechanical audits for football, rugby, and basketball.")
-        c1, c2, c3 = st.columns(3)
-        c1.markdown("<div class='pricing-card'><h3>Individual</h3><h2>£29/mo</h2></div>", unsafe_allow_html=True)
-        c2.markdown("<div class='pricing-card' style='border-color:#00ab4e'><h3>Squad Pro</h3><h2>£199/mo</h2></div>", unsafe_allow_html=True)
-        c3.markdown("<div class='pricing-card'><h3>Elite</h3><h2>£POA</h2></div>", unsafe_allow_html=True)
-    st.stop()
+        if st.form_submit_button("Sign In"):
+            if u == "admin" and p == "owner2026":
+                st.session_state.logged_in = True
+                st.session_state.show_login = False
+                st.rerun()
+            else: st.error("Credentials not recognized.")
+    if st.button("Close"): 
+        st.session_state.show_login = False
+        st.rerun()
 
-# --- 5. MAIN NAVIGATION ---
-user_role = st.session_state.users[st.session_state.logged_in]["role"]
-menu = ["Analysis", "12-Week Roadmap", "Squad Dashboard"]
-if user_role == "Owner": menu.insert(0, "🛡️ Admin Console")
-choice = st.sidebar.radio("Navigation", menu)
+# --- 5. CONDITIONAL CONTENT: PUBLIC vs PRIVATE ---
 
-# --- 6. PAGE: 12-WEEK ROADMAP ---
-if choice == "12-Week Roadmap":
-    st.header("📅 Player Recovery & Development Hub")
-    p_id = st.selectbox("Select Player Number", list(st.session_state.roadmaps.keys()))
+if not st.session_state.logged_in:
+    # --- PUBLIC HOMEPAGE ---
+    st.markdown("<p class='hero-sub'>Clinical Biomechanics for the 1%.</p>", unsafe_allow_html=True)
     
-    col_map, col_details = st.columns([1, 2])
-    with col_map:
-        st.plotly_chart(generate_body_map(st.session_state.roadmaps[p_id]))
-    with col_details:
-        st.subheader(f"Current Plan for Player #{p_id}")
-        for item in reversed(st.session_state.roadmaps[p_id]):
-            st.markdown(f"<div class='roadmap-card'><strong>{item['date']}</strong>: {item['note']}</div>", unsafe_allow_html=True)
-        st.info("AI RECOMMENDATION: Perform Week 4 stability drills. Avoid high-velocity sprints until symmetry improves.")
+    st.divider()
+    
+    # Value Proposition Section
+    st.header("The BioGuard Advantage")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.write("### 🛡️ Risk Mitigation")
+        st.write("Detect sub-clinical fatigue markers and mechanical drift before they manifest as ACL or hamstring trauma.")
+    with c2:
+        st.write("### 📊 Tactical Synergy")
+        st.write("AI-driven squad compactness metrics. Audit spacing, scanning frequency, and defensive transition speed.")
+    with c3:
+        st.write("### 💎 Value Retention")
+        st.write("Generate verified 'Health Passports' for high-value players to protect market valuation during scouting.")
 
-# --- 7. PAGE: ADMIN CONSOLE (OWNER ONLY) ---
-elif choice == "🛡️ Admin Console":
-    st.header("System Owner Dashboard")
-    new_team = st.text_input("New Team Username")
-    if st.button("Create Team License"):
-        temp_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-        st.session_state.users[new_team] = {"pass": temp_pass, "role": "Coach", "name": f"Coach {new_team}"}
-        st.success(f"License Active. Password: {temp_pass}")
+    st.divider()
+    
+    # Luxury Pricing Tiers
+    st.header("Strategic Partnerships")
+    p1, p2, p3 = st.columns(3)
+    with p1:
+        st.markdown("<div class='luxury-card'><h4>Individual</h4><h1>£29<span style='font-size:1rem'>/mo</span></h1><p>Single Player Scan<br>Bi-Weekly Report</p></div>", unsafe_allow_html=True)
+    with p2:
+        st.markdown("<div class='luxury-card' style='border-color: #00ab4e'><h4>Squad Pro</h4><h1>£199<span style='font-size:1rem'>/mo</span></h1><p>Full Team (25 Players)<br>Interactive Roadmap<br>24/7 AI Audit</p></div>", unsafe_allow_html=True)
+    with p3:
+        st.markdown("<div class='luxury-card'><h4>Academy Elite</h4><h1>£POA</h1><p>Club-wide Integration<br>Custom 3D Mapping<br>Clinical Staff Portal</p></div>", unsafe_allow_html=True)
+
+else:
+    # --- PRIVATE MEMBER DASHBOARD ---
+    st.sidebar.title("Elite Portal")
+    choice = st.sidebar.radio("Navigation", ["Squad Analysis", "12-Week Roadmap", "Admin Hub"])
+    
+    if choice == "12-Week Roadmap":
+        st.header("📅 Recovery & Development Roadmap")
+        # Body map and roadmap logic goes here...
+        st.info("Member content active. Welcome back, Owner.")
