@@ -6,7 +6,6 @@ import time
 st.set_page_config(page_title="Elite Performance | BioGuard AI", layout="wide")
 
 def apply_elite_styling():
-    # Cinematic Football Background
     bg_img = "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=2000"
     st.markdown(f"""
     <style>
@@ -19,26 +18,25 @@ def apply_elite_styling():
             font-family: 'Inter', sans-serif; color: #ffffff;
         }}
 
-        /* --- THE WHITE BOX / BLACK TEXT FIX --- */
-        /* Targets inputs, selectboxes, and the video uploader box specifically */
+        /* --- UNIVERSAL WHITE BOX / BLACK TEXT FIX --- */
         input, textarea, [data-baseweb="input"], [data-baseweb="select"], [data-testid="stFileUploader"] section {{
             background-color: #ffffff !important;
             color: #000000 !important;
             border-radius: 10px !important;
         }}
         
-        /* Force text inside the uploader to be black and visible */
+        /* Force uploader instructions to be black and visible */
         [data-testid="stFileUploader"] section * {{
             color: #000000 !important;
         }}
 
-        /* Ensure typed text and dropdown text is black */
+        /* Force typed text and dropdown text to black */
         input, div[data-baseweb="select"] span {{
              color: #000000 !important;
              -webkit-text-fill-color: #000000 !important;
         }}
 
-        /* --- FIX FOR ERROR BOXES (White on White fix) --- */
+        /* --- ERROR & POPUP CONTRAST FIX --- */
         .stException, .stAlert, div[data-testid="stNotification"] {{
             background-color: #ffffff !important;
             color: #000000 !important;
@@ -49,10 +47,7 @@ def apply_elite_styling():
             color: #000000 !important;
         }}
 
-        /* Labels stay white to be seen on dark background */
         label, p {{ color: #ffffff !important; }}
-        
-        /* Menu Tabs Styling */
         button[data-baseweb="tab"] {{ color: white !important; font-weight: bold; }}
 
         .luxury-card {{
@@ -75,10 +70,10 @@ if "roadmap" not in st.session_state:
         "2": [{"date": "2026-01-11", "issue": "Right Knee", "note": "Initial baseline established."}]
     }
 
-# --- 3. THE NAVIGATION MENU ---
+# --- 3. MENU NAVIGATION ---
 menu_options = ["Home", "Solutions", "Subscription Plans"]
 if st.session_state.logged_in:
-    menu_options += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Console"]
+    menu_options += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
 
 current_tab = st.tabs(menu_options)
 
@@ -99,8 +94,7 @@ with current_tab[0]: # HOME
 
 with current_tab[1]: # SOLUTIONS
     st.header("Strategic Value")
-    st.write("Detect mechanical drift in high-value athletes using match highlights.")
-    st.write("⚽ Football | 🏉 Rugby | 🏀 Basketball")
+    st.write("Detect mechanical drift in elite athletes using standard match highlights.")
 
 with current_tab[2]: # SUBSCRIPTION
     st.header("Elite Tiers")
@@ -109,7 +103,7 @@ with current_tab[2]: # SUBSCRIPTION
     p2.markdown("<div class='luxury-card' style='border-color:#00ab4e'><h3>Squad Pro</h3><h2>£199/mo</h2></div>", unsafe_allow_html=True)
     p3.markdown("<div class='luxury-card'><h3>Academy</h3><h2>£POA</h2></div>", unsafe_allow_html=True)
 
-# --- 5. PRIVATE MEMBER CAPABILITIES ---
+# --- 5. PRIVATE MEMBER AREA ---
 if st.session_state.logged_in:
     with current_tab[3]: # ANALYSIS ENGINE
         st.header("🎥 Video Analysis Engine")
@@ -126,18 +120,17 @@ if st.session_state.logged_in:
                         st.session_state.roadmap[p_num] = []
                     
                     st.session_state.roadmap[p_num].append({
-                        "date": "2026-01-11", 
-                        "issue": "Right Knee", 
+                        "date": "2026-01-11", "issue": "Right Knee", 
                         "note": "Detected 12° medial buckle. Recommended Week 2 rehab drills."
                     })
                 st.success(f"Audit Complete for Player #{p_num}.")
 
-    with current_tab[4]: # PLAYER DASHBOARD
+    with current_tab[4]: # PLAYER DASHBOARD (THE HUMAN BODY VIEW)
         st.header("🩺 Biometric Body Map")
         p_select = st.selectbox("Select Player", list(st.session_state.roadmap.keys()))
         
-        # New reliable global image link
-        body_map_url = "https://raw.githubusercontent.com/plotly/datasets/master/human_body_outline.png"
+        # Globally reliable medical body outline
+        body_map_url = "https://i.ibb.co/L5h8xK3/human-body-outline.png"
         
         fig = go.Figure()
         fig.add_layout_image(dict(source=body_map_url, xref="x", yref="y", x=0, y=800, sizex=500, sizey=800, sizing="stretch", opacity=0.8, layer="below"))
@@ -145,7 +138,7 @@ if st.session_state.logged_in:
         if p_select in st.session_state.roadmap:
             for item in st.session_state.roadmap[p_select]:
                 if "Knee" in item["issue"]:
-                    # Pinning marker on the map
+                    # Placing red dot on the right knee
                     fig.add_trace(go.Scatter(x=[185], y=[540], mode='markers', marker=dict(size=25, color="red"), hovertext=item['note']))
         
         fig.update_layout(width=400, height=600, margin=dict(l=0,r=0,t=0,b=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
@@ -155,9 +148,8 @@ if st.session_state.logged_in:
     with current_tab[5]: # 12-WEEK ROADMAP
         st.header("📅 Recovery Roadmap")
         p_road = st.selectbox("View History", list(st.session_state.roadmap.keys()), key="road_p")
-        if p_road in st.session_state.roadmap:
-            for event in reversed(st.session_state.roadmap[p_road]):
-                st.markdown(f"**{event['date']}**: {event['note']}")
+        for event in reversed(st.session_state.roadmap[p_road]):
+            st.markdown(f"**{event['date']}**: {event['note']}")
 
-    with current_tab[6]: # ADMIN
+    with current_tab[6]: # ADMIN HUB
         st.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))
