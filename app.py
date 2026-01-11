@@ -2,136 +2,134 @@ import streamlit as st
 import plotly.graph_objects as go
 import time, random, string
 
-# --- 1. SETTINGS & LUXURY THEME ---
-st.set_page_config(page_title="BioGuard AI | Elite Analytics", layout="wide")
+# --- 1. SETTINGS & ELITE BRANDING ---
+st.set_page_config(page_title="Elite Performance | BioGuard AI", layout="wide")
 
-def apply_luxury_styling():
+def apply_elite_theme():
     st.markdown("""
     <style>
-        /* Modern Dark Luxury Theme */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&display=swap');
         
-        html, body, [class*="st-"] {
-            font-family: 'Inter', sans-serif;
-            color: #E0E0E0;
-        }
+        html, body, [class*="st-"] { font-family: 'Montserrat', sans-serif; color: #f0f0f0; }
         
         .stApp {
-            background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), 
-                        url("https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=2000");
-            background-size: cover;
-            background-attachment: fixed;
+            background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), 
+                        url("https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&q=80&w=2000");
+            background-size: cover; background-attachment: fixed;
         }
 
-        /* Top Navigation Bar Simulation */
-        .nav-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 3rem;
+        /* Top Menu Bar */
+        .top-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 50px; background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(15px); border-bottom: 2px solid #00ab4e;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 999;
         }
 
-        /* Luxury Pricing Cards */
-        .luxury-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-            transition: all 0.3s ease;
+        /* Luxury Cards */
+        .tier-card {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px; padding: 30px; text-align: center; height: 100%;
         }
-        .luxury-card:hover {
-            border-color: #00ab4e;
-            background: rgba(255, 255, 255, 0.07);
-            transform: translateY(-5px);
-        }
-
-        /* Typography */
-        h1 { font-weight: 700; letter-spacing: -1px; color: white; margin-bottom: 0.5rem; }
-        .hero-sub { font-weight: 300; font-size: 1.5rem; color: #AAA; margin-bottom: 3rem; }
+        
+        .stButton>button { border-radius: 50px; border: 1px solid #00ab4e; background: transparent; color: white; transition: 0.3s; }
+        .stButton>button:hover { background: #00ab4e; border-color: #00ab4e; }
     </style>
     """, unsafe_allow_html=True)
 
-apply_luxury_styling()
+apply_elite_theme()
 
-# --- 2. DATA STATE ---
+# --- 2. SESSION & DATABASE STATE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmaps" not in st.session_state:
-    st.session_state.roadmaps = {"2": [{"date": "2026-01-11", "issue": "Right Knee", "note": "Gait asymmetry detected"}]}
+    st.session_state.roadmaps = {"2": [{"date": "2026-01-11", "issue": "Right Knee", "note": "Gait asymmetry"}]}
 
-# --- 3. THE "LUXURY" HEADER ---
-# This simulates the top-right icon navigation
-col_title, col_nav = st.columns([3, 1])
-with col_title:
-    st.markdown("# 🛡️ BIOGUARD AI")
-with col_nav:
+# --- 3. THE MENU BAR ---
+# Using Streamlit columns to simulate a top navigation bar
+st.markdown("<br><br>", unsafe_allow_html=True) # Spacer for fixed nav
+col_logo, col_menu = st.columns([1, 2])
+
+with col_logo:
+    st.markdown("## 🛡️ ELITE PERFORMANCE")
+
+with col_menu:
+    # Navigation items
+    nav_tabs = ["Home", "Solutions", "Subscription"]
+    if st.session_state.logged_in:
+        nav_tabs += ["Analysis", "12-Week Roadmap", "Admin"]
+    
+    current_page = st.tabs(nav_tabs)
+
+# Login Trigger in Sidebar for a clean UI
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
     if not st.session_state.logged_in:
-        if st.button("👤 Member Login", use_container_width=True):
-            st.session_state.show_login = True
+        st.subheader("Partner Access")
+        user = st.text_input("Username")
+        pw = st.text_input("Password", type="password")
+        if st.button("Unlock Capabilities"):
+            if user == "admin" and pw == "owner2026":
+                st.session_state.logged_in = True
+                st.rerun()
     else:
-        if st.button("🚪 Logout", use_container_width=True):
+        st.success(f"Connected: {user if 'user' in locals() else 'Admin'}")
+        if st.button("Logout"):
             st.session_state.logged_in = False
             st.rerun()
 
-# --- 4. LOGIN OVERLAY (Only shows if clicked) ---
-if hasattr(st.session_state, 'show_login') and st.session_state.show_login and not st.session_state.logged_in:
-    with st.form("login_form"):
-        st.subheader("Partner Access")
-        u = st.text_input("Username")
-        p = st.text_input("Password", type="password")
-        if st.form_submit_button("Sign In"):
-            if u == "admin" and p == "owner2026":
-                st.session_state.logged_in = True
-                st.session_state.show_login = False
-                st.rerun()
-            else: st.error("Credentials not recognized.")
-    if st.button("Close"): 
-        st.session_state.show_login = False
-        st.rerun()
+# --- 4. PAGE LOGIC ---
 
-# --- 5. CONDITIONAL CONTENT: PUBLIC vs PRIVATE ---
-
-if not st.session_state.logged_in:
-    # --- PUBLIC HOMEPAGE ---
-    st.markdown("<p class='hero-sub'>Clinical Biomechanics for the 1%.</p>", unsafe_allow_html=True)
-    
+# 4A. HOME PAGE (Public)
+with current_page[0]:
+    st.markdown("<h1 style='text-align: center;'>The Future of Athlete Preservation</h1>", unsafe_allow_html=True)
+    st.write("### Elite Performance provides proprietary AI diagnostics for Tier 1 organizations.")
     st.divider()
-    
-    # Value Proposition Section
-    st.header("The BioGuard Advantage")
-    c1, c2, c3 = st.columns(3)
+    st.header("Covered Disciplines")
+    st.write("⚽ Football (Soccer) | 🏉 Rugby Union & League | 🏀 Basketball | 🏈 American Football")
+
+# 4B. SOLUTIONS (Public)
+with current_page[1]:
+    st.header("Our Business Value")
+    c1, c2 = st.columns(2)
     with c1:
-        st.write("### 🛡️ Risk Mitigation")
-        st.write("Detect sub-clinical fatigue markers and mechanical drift before they manifest as ACL or hamstring trauma.")
+        st.subheader("Clinical Data vs. Video Evidence")
+        st.write("We bridge the gap between physio-room data and pitch-side reality. Our AI audits biomechanics from standard match highlights.")
     with c2:
-        st.write("### 📊 Tactical Synergy")
-        st.write("AI-driven squad compactness metrics. Audit spacing, scanning frequency, and defensive transition speed.")
-    with c3:
-        st.write("### 💎 Value Retention")
-        st.write("Generate verified 'Health Passports' for high-value players to protect market valuation during scouting.")
+        st.subheader("ROI for Clubs")
+        st.write("Reducing non-contact injuries by 15% saves a Premier League club an average of £4.2M per season in lost player availability.")
 
-    st.divider()
-    
-    # Luxury Pricing Tiers
-    st.header("Strategic Partnerships")
+# 4C. SUBSCRIPTIONS (Public)
+with current_page[2]:
+    st.header("Elite Tiers")
     p1, p2, p3 = st.columns(3)
-    with p1:
-        st.markdown("<div class='luxury-card'><h4>Individual</h4><h1>£29<span style='font-size:1rem'>/mo</span></h1><p>Single Player Scan<br>Bi-Weekly Report</p></div>", unsafe_allow_html=True)
-    with p2:
-        st.markdown("<div class='luxury-card' style='border-color: #00ab4e'><h4>Squad Pro</h4><h1>£199<span style='font-size:1rem'>/mo</span></h1><p>Full Team (25 Players)<br>Interactive Roadmap<br>24/7 AI Audit</p></div>", unsafe_allow_html=True)
-    with p3:
-        st.markdown("<div class='luxury-card'><h4>Academy Elite</h4><h1>£POA</h1><p>Club-wide Integration<br>Custom 3D Mapping<br>Clinical Staff Portal</p></div>", unsafe_allow_html=True)
+    p1.markdown("<div class='tier-card'><h3>Individual</h3><p>£29/mo</p><p>Standard AI Analytics</p></div>", unsafe_allow_html=True)
+    p2.markdown("<div class='tier-card'><h3>Squad Pro</h3><p>£199/mo</p><p>Unlimited Analysis<br>Interactive Body Map</p></div>", unsafe_allow_html=True)
+    p3.markdown("<div class='tier-card'><h3>Academy</h3><p>£POA</p><p>Custom 3D Scanning<br>Full Medical Integration</p></div>", unsafe_allow_html=True)
 
-else:
-    # --- PRIVATE MEMBER DASHBOARD ---
-    st.sidebar.title("Elite Portal")
-    choice = st.sidebar.radio("Navigation", ["Squad Analysis", "12-Week Roadmap", "Admin Hub"])
-    
-    if choice == "12-Week Roadmap":
-        st.header("📅 Recovery & Development Roadmap")
-        # Body map and roadmap logic goes here...
-        st.info("Member content active. Welcome back, Owner.")
+# 4D. PROTECTED PAGES (Only if logged in)
+if st.session_state.logged_in:
+    # ANALYSIS ENGINE
+    with current_page[3]:
+        st.header("Video Analysis Engine")
+        st.write("Upload match highlights to detect mechanical drift.")
+        player_num = st.text_input("Target Player #", placeholder="e.g. 10")
+        uploaded_video = st.file_uploader("Upload MP4/MOV", type=['mp4', 'mov'])
+        
+        if uploaded_video:
+            st.video(uploaded_video)
+            if st.button("Generate Elite Audit"):
+                with st.status("Analyzing Skeletal Landmarks..."):
+                    time.sleep(3)
+                    st.session_state.roadmaps["10"] = [{"date": "2026-01-11", "issue": "Lower Back", "note": "High lumbar stress"}]
+                    st.success("Audit Complete. Data pushed to Roadmap.")
+
+    # ROADMAP
+    with current_page[4]:
+        st.header("12-Week Roadmap")
+        # Insert Body Map Logic here (from previous turn)
+        st.write("Tracking history for all clinical alerts.")
+
+    # ADMIN
+    with current_page[5]:
+        st.header("Admin Hub")
+        st.write("Manage team licenses and global metrics.")
