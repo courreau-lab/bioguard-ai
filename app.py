@@ -21,7 +21,7 @@ def apply_elite_styling():
             color: #ffffff !important;
         }}
         
-        /* THE BLACK BOX FIX: FORCES DARK BACKGROUND ON ALL INPUTS */
+        /* FIX WHITE-ON-WHITE: FORCES DEEP BLACK BACKGROUND ON ALL INPUTS */
         input, textarea, select, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput>div>div>input {{
             background-color: #000000 !important;
             color: #ffffff !important;
@@ -100,10 +100,10 @@ if st.session_state.logged_in:
     with current_tab[3]: # ANALYSIS ENGINE
         st.header("🎥 Live AI Technical Audit")
         p_num = st.text_input("Target Player Number", "22", key="analysis_p")
-        video_file = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
+        video_file = st.file_uploader("Upload Match Clip (MP4/MOV)", type=['mp4', 'mov'])
         if video_file and 'client' in locals():
             st.video(video_file)
-            if st.button("Generate Dual-Track Analysis"):
+            if st.button("Generate Dual-Track Elite Analysis"):
                 with st.status("🤖 AI Processing Video...", expanded=True):
                     try:
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
@@ -111,50 +111,61 @@ if st.session_state.logged_in:
                             tmp_path = tmp.name
                         
                         uploaded_file = client.files.upload(file=tmp_path)
-                        prompt = "Analyze this sports video. 1. HEALTH (injury risk markers like knee valgus). 2. PLAY (tactical improvements)."
+                        prompt = "Analyze this sports video. 1. HEALTH (injury risk markers). 2. PLAY (tactical improvements)."
                         response = client.models.generate_content(
-                            model="gemini-2.0-flash-exp", 
-                            contents=[prompt, uploaded_file]
+                            model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file]
                         )
                         st.session_state.roadmap[p_num].append({"date": "2026-01-11", "category": "AI Audit", "note": response.text})
                         os.remove(tmp_path)
                         st.success("Audit Complete.")
                     except Exception as e:
                         if "429" in str(e):
-                            st.error("🚨 AI QUOTA EXCEEDED: You have used all free AI requests for this hour. Please wait 60 seconds or upgrade your Gemini plan.")
+                            st.error("🚨 AI QUOTA EXCEEDED: The free AI engine is busy. Please wait 60 seconds.")
                         else:
                             st.error(f"AI Failure: {e}")
 
     with current_tab[4]: # THE 3D ROTATABLE DIGITAL TWIN
         st.header("🩺 3D Biometric Injury Mapping")
-        st.write("Rotate this Digital Twin to inspect clinical points pinpointed by AI.")
+        st.write("Inspect the clinical 'Digital Twin' for biomechanical alerts.")
         
-        # GENERATING A HIGH-TECH 3D MESH (Digital Twin Look)
-        # Coordinates for a more professional-looking human volume
-        theta = np.linspace(0, 2*np.pi, 20)
-        z = np.linspace(0, 8, 20)
-        THETA, Z = np.meshgrid(theta, z)
-        R = 1.0 + 0.5 * np.sin(Z/2) # Simple organic shape
-        X = R * np.cos(THETA)
-        Y = R * np.sin(THETA)
+        # GENERATING A PRO MEDICAL MESH (Glass Effect)
+        def create_body_mesh():
+            # Create a more organic human volume using ellipsoids
+            def ellipsoid(x_c, y_c, z_c, rx, ry, rz):
+                u = np.linspace(0, 2 * np.pi, 20)
+                v = np.linspace(0, np.pi, 20)
+                x = x_c + rx * np.outer(np.cos(u), np.sin(v))
+                y = y_c + ry * np.outer(np.sin(u), np.sin(v))
+                z = z_c + rz * np.outer(np.ones_like(u), np.cos(v))
+                return x.flatten(), y.flatten(), z.flatten()
+
+            # Assemble Torso, Head, and Limbs
+            tx, ty, tz = ellipsoid(0, 0, 4, 1.2, 0.8, 2)   # Torso
+            hx, hy, hz = ellipsoid(0, 0, 7, 0.6, 0.6, 0.7) # Head
+            lx, ly, lz = ellipsoid(0.7, 0, 1.5, 0.4, 0.4, 1.5) # Left Leg
+            rx, ry, rz = ellipsoid(-0.7, 0, 1.5, 0.4, 0.4, 1.5) # Right Leg
+            
+            return np.concatenate([tx, hx, lx, rx]), np.concatenate([ty, hy, ly, ry]), np.concatenate([tz, hz, lz, rz])
+
+        bx, by, bz = create_body_mesh()
         
         fig = go.Figure()
 
-        # The 3D Digital Twin Volume (Medical Scan Effect)
+        # The 3D Digital Twin (Silver/Glass Medical Look)
         fig.add_trace(go.Mesh3d(
-            x=X.flatten(), y=Y.flatten(), z=Z.flatten(),
-            alphahull=5,
-            color='#00ab4e',
-            opacity=0.3,
+            x=bx, y=by, z=bz,
+            alphahull=7,
+            color='lightgray',
+            opacity=0.2,
             name="Digital Twin"
         ))
 
-        # THE CLINICAL PINPOINT (Red Pulsing Point)
+        # THE CLINICAL PINPOINT (The Red Pulsing Alert)
         fig.add_trace(go.Scatter3d(
-            x=[1.3], y=[0], z=[2], # Pinpointed on the lower limb area
+            x=[-0.7], y=[0], z=[1.5], # Pinpointed on the Right Knee area
             mode='markers',
             marker=dict(size=18, color='#ff4b4b', symbol='diamond', line=dict(width=3, color='white')),
-            hovertext="PLAYER #22: ACUTE KNEE VALGUS DETECTED"
+            hovertext="PLAYER #22: CRITICAL - RIGHT KNEE STABILITY ALERT"
         ))
 
         fig.update_layout(
@@ -162,13 +173,13 @@ if st.session_state.logged_in:
             scene=dict(
                 xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False),
                 bgcolor='rgba(0,0,0,0)',
-                camera=dict(eye=dict(x=1.5, y=1.5, z=0.5))
+                camera=dict(eye=dict(x=1.8, y=1.8, z=0.8))
             ),
             paper_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=0, r=0, t=0, b=0)
         )
         st.plotly_chart(fig, use_container_width=True)
-        st.info("💡 Click and drag to rotate. The red diamond marks the mechanical failure zone.")
+        st.info("💡 Rotate the model to inspect the mechanical failure zone.")
 
     with current_tab[5]: # ROADMAP
         st.header("📅 Integrated 12-Week Roadmap")
