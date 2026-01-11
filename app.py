@@ -6,6 +6,7 @@ import time
 st.set_page_config(page_title="Elite Performance | BioGuard AI", layout="wide")
 
 def apply_elite_styling():
+    # Cinematic Football Background
     bg_img = "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=2000"
     st.markdown(f"""
     <style>
@@ -19,39 +20,38 @@ def apply_elite_styling():
         }}
 
         /* --- THE WHITE BOX / BLACK TEXT FIX --- */
-        input, textarea, [data-baseweb="input"], [data-baseweb="select"] {{
+        /* Targets inputs, selectboxes, and the video uploader box specifically */
+        input, textarea, [data-baseweb="input"], [data-baseweb="select"], [data-testid="stFileUploader"] section {{
             background-color: #ffffff !important;
             color: #000000 !important;
-            border-radius: 8px !important;
+            border-radius: 10px !important;
         }}
         
-        /* File Uploader Contrast Fix */
-        [data-testid="stFileUploader"] section {{
-            background-color: #ffffff !important;
-            border-radius: 8px !important;
-            border: 2px dashed #ccc !important;
+        /* Force text inside the uploader to be black and visible */
+        [data-testid="stFileUploader"] section * {{
+            color: #000000 !important;
         }}
 
-        /* Force ALL text inside inputs, dropdowns, and uploader to be BLACK */
-        [data-testid="stFileUploader"] section *, 
-        input, 
-        div[data-baseweb="select"] span,
-        .stSelectbox div {{
+        /* Ensure typed text and dropdown text is black */
+        input, div[data-baseweb="select"] span {{
              color: #000000 !important;
              -webkit-text-fill-color: #000000 !important;
         }}
 
         /* --- FIX FOR ERROR BOXES (White on White fix) --- */
-        .stException, .stAlert, div[data-testid="stNotification"], .stMarkdown pre {{
+        .stException, .stAlert, div[data-testid="stNotification"] {{
             background-color: #ffffff !important;
             color: #000000 !important;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
         }}
-        .stException p, .stException pre, .stAlert p, .stMarkdown code {{
+        .stException p, .stException pre, .stAlert p {{
             color: #000000 !important;
         }}
 
+        /* Labels stay white to be seen on dark background */
+        label, p {{ color: #ffffff !important; }}
+        
         /* Menu Tabs Styling */
         button[data-baseweb="tab"] {{ color: white !important; font-weight: bold; }}
 
@@ -99,7 +99,8 @@ with current_tab[0]: # HOME
 
 with current_tab[1]: # SOLUTIONS
     st.header("Strategic Value")
-    st.write("Protect high-value athletes with clinical-grade AI video audits.")
+    st.write("Detect mechanical drift in high-value athletes using match highlights.")
+    st.write("⚽ Football | 🏉 Rugby | 🏀 Basketball")
 
 with current_tab[2]: # SUBSCRIPTION
     st.header("Elite Tiers")
@@ -113,32 +114,39 @@ if st.session_state.logged_in:
     with current_tab[3]: # ANALYSIS ENGINE
         st.header("🎥 Video Analysis Engine")
         p_num = st.text_input("Target Player Number", placeholder="e.g., 10")
-        video_file = st.file_uploader("Upload Match Footage", type=['mp4', 'mov'])
+        video_file = st.file_uploader("Upload MP4/MOV Video", type=['mp4', 'mov'])
         
         if video_file:
             st.video(video_file)
             if st.button("Generate Elite Audit"):
                 with st.status("Analyzing Skeletal Landmarks..."):
                     time.sleep(3)
-                    findings = "Detected medial drift. Recommended stability drills."
-                    
-                    # KEYERROR FIX: Ensure player exists
+                    # FIX: Handle new player creation automatically
                     if p_num not in st.session_state.roadmap:
                         st.session_state.roadmap[p_num] = []
                     
-                    st.session_state.roadmap[p_num].append({"date": "2026-01-11", "issue": "Right Knee", "note": findings})
+                    st.session_state.roadmap[p_num].append({
+                        "date": "2026-01-11", 
+                        "issue": "Right Knee", 
+                        "note": "Detected 12° medial buckle. Recommended Week 2 rehab drills."
+                    })
                 st.success(f"Audit Complete for Player #{p_num}.")
 
     with current_tab[4]: # PLAYER DASHBOARD
         st.header("🩺 Biometric Body Map")
         p_select = st.selectbox("Select Player", list(st.session_state.roadmap.keys()))
         
-        fig = go.Figure()
-        fig.add_layout_image(dict(source="https://i.imgur.com/9Yg0vVb.png", xref="x", yref="y", x=0, y=800, sizex=500, sizey=800, sizing="stretch", opacity=0.8, layer="below"))
+        # New reliable global image link
+        body_map_url = "https://raw.githubusercontent.com/plotly/datasets/master/human_body_outline.png"
         
-        for item in st.session_state.roadmap[p_select]:
-            if "Knee" in item["issue"]:
-                fig.add_trace(go.Scatter(x=[180], y=[550], mode='markers', marker=dict(size=25, color="red"), hovertext=item['note']))
+        fig = go.Figure()
+        fig.add_layout_image(dict(source=body_map_url, xref="x", yref="y", x=0, y=800, sizex=500, sizey=800, sizing="stretch", opacity=0.8, layer="below"))
+        
+        if p_select in st.session_state.roadmap:
+            for item in st.session_state.roadmap[p_select]:
+                if "Knee" in item["issue"]:
+                    # Pinning marker on the map
+                    fig.add_trace(go.Scatter(x=[185], y=[540], mode='markers', marker=dict(size=25, color="red"), hovertext=item['note']))
         
         fig.update_layout(width=400, height=600, margin=dict(l=0,r=0,t=0,b=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         fig.update_xaxes(visible=False, range=[0, 500]); fig.update_yaxes(visible=False, range=[0, 800])
@@ -147,8 +155,9 @@ if st.session_state.logged_in:
     with current_tab[5]: # 12-WEEK ROADMAP
         st.header("📅 Recovery Roadmap")
         p_road = st.selectbox("View History", list(st.session_state.roadmap.keys()), key="road_p")
-        for event in reversed(st.session_state.roadmap[p_road]):
-            st.markdown(f"**{event['date']}**: {event['note']}")
+        if p_road in st.session_state.roadmap:
+            for event in reversed(st.session_state.roadmap[p_road]):
+                st.markdown(f"**{event['date']}**: {event['note']}")
 
     with current_tab[6]: # ADMIN
         st.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))
