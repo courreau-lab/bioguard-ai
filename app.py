@@ -79,7 +79,9 @@ current_tab = st.tabs(tabs)
 # --- 5. PAGES ---
 with current_tab[0]: # HOME
     st.title("🛡️ ELITE PERFORMANCE")
+    st.subheader("Bespoke AI Diagnostics & Performance Optimization")
     if not st.session_state.logged_in:
+        st.divider()
         st.markdown("### Partner Portal Access")
         u = st.text_input("Username", placeholder="admin", key="main_u")
         p = st.text_input("Password", type="password", placeholder="owner2026", key="main_p")
@@ -88,10 +90,28 @@ with current_tab[0]: # HOME
                 st.session_state.logged_in = True
                 st.rerun()
 
+with current_tab[1]: # BUSINESS OFFER
+    st.header("The Competitive Advantage")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.write("### ⚽ Covered Disciplines")
+        st.write("- Football (Soccer)\n- Rugby Union/League\n- Basketball\n- American Football")
+    with col_b:
+        st.write("### 💎 Dual-Track Value")
+        st.write("**Injury Prevention:** Clinical biomechanics for non-contact risk mitigation.")
+        st.write("**Performance Gain:** Tactical intelligence and spatial awareness audits.")
+
+with current_tab[2]: # SUBSCRIPTION
+    st.header("Strategic Partnership Tiers")
+    p1, p2, p3 = st.columns(3)
+    p1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
+    p2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Full Squad Dual Audits<br>Interactive Body Map</p></div>", unsafe_allow_html=True)
+    p3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Custom 3D Scanning</p></div>", unsafe_allow_html=True)
+
 if st.session_state.logged_in:
     with current_tab[3]: # ANALYSIS ENGINE
         st.header("🎥 Live AI Technical Audit")
-        p_num = st.text_input("Target Player Number", "2", key="analysis_p_num_final")
+        p_num = st.text_input("Target Player Number", "2", key="analysis_p_num_restore")
         video_file = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
         if video_file and 'client' in locals():
             st.video(video_file)
@@ -103,11 +123,8 @@ if st.session_state.logged_in:
                             tmp_path = tmp.name
                         
                         uploaded_file = client.files.upload(file=tmp_path)
-                        prompt = "Analyze this sports video. 1. HEALTH (injury risk markers like knee valgus). 2. PLAY (tactical gains)."
-                        response = client.models.generate_content(
-                            model="gemini-2.0-flash-exp", 
-                            contents=[prompt, uploaded_file]
-                        )
+                        prompt = "Analyze this sports video for injury risk and tactical play. Return clinical notes."
+                        response = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file])
                         st.session_state.roadmap[p_num].append({"date": "2026-01-11", "category": "AI Audit", "note": response.text})
                         os.remove(tmp_path)
                         st.success("Audit Complete.")
@@ -117,42 +134,24 @@ if st.session_state.logged_in:
 
     with current_tab[4]: # THE PINPOINT BODY MAP
         st.header("🩺 Biometric Injury Mapping")
-        st.write("Current detected risks for elite squad members.")
-        
-        # WE ARE BUILDING THE ANATOMY LOCALLY (NO IMAGE REQUIRED)
+        # Anatomical Model using High-Contrast Scatter Points (3D ready)
+        # This replaces the broken regional image with a robust, data-driven "man"
         fig = go.Figure()
         
-        # Anatomical Wireframe (Head, Torso, Arms, Legs)
-        fig.add_trace(go.Scatter(
-            x=[200, 200, 150, 100, 150, 250, 300, 250, 200, 150, 150, 250, 250],
-            y=[750, 600, 600, 450, 600, 600, 450, 600, 600, 400, 150, 400, 150],
-            mode='lines+markers',
-            line=dict(color='rgba(255, 255, 255, 0.3)', width=4),
-            marker=dict(size=8, color='#00ab4e'),
-            name="Anatomical Frame"
-        ))
+        # Head & Torso
+        fig.add_trace(go.Scatter(x=[200, 200, 150, 250, 150, 250, 150, 250], 
+                                 y=[750, 600, 600, 600, 450, 450, 200, 200], 
+                                 mode='markers+lines', line=dict(color='white', width=2),
+                                 marker=dict(size=12, color='#00ab4e')))
         
-        # THE RED PINPOINT (The actual injury detection)
-        fig.add_trace(go.Scatter(
-            x=[250], y=[250], # This targets the knee joint area
-            mode='markers',
-            marker=dict(size=35, color="#ff4b4b", symbol="star", line=dict(width=3, color='white')),
-            hovertext="PLAYER #2: CRITICAL - MEDIAL KNEE VALGUS DETECTED",
-            name="Injury Risk"
-        ))
+        # Injury Pin (The Star)
+        fig.add_trace(go.Scatter(x=[250], y=[250], mode='markers',
+                                 marker=dict(size=40, color="#ff4b4b", symbol="star", line=dict(width=2, color='white')),
+                                 hovertext="CRITICAL: MEDIAL KNEE VALGUS"))
         
-        fig.update_layout(
-            width=500, height=700,
-            margin=dict(l=0, r=0, t=0, b=0),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            showlegend=False
-        )
-        fig.update_xaxes(visible=False, range=[0, 400])
-        fig.update_yaxes(visible=False, range=[0, 800])
-        
+        fig.update_layout(width=500, height=700, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                          showlegend=False, xaxis=dict(visible=False, range=[0, 400]), yaxis=dict(visible=False, range=[0, 800]))
         st.plotly_chart(fig, use_container_width=True)
-        st.info("The star indicates the mechanical failure zone detected by AI analysis.")
 
     with current_tab[5]: # ROADMAP
         st.header("📅 Integrated 12-Week Roadmap")
