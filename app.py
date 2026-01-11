@@ -14,4 +14,40 @@ def apply_elite_styling():
         /* Global Background & Font */
         .stApp {{
             background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url("{bg_img}");
-            background
+            background-size: cover; background-attachment: fixed;
+            font-family: 'Inter', sans-serif; color: #ffffff;
+        }}
+
+        /* --- THE WHITE BOX / BLACK TEXT FIX --- */
+        
+        /* 1. Standard Inputs & Select Boxes */
+        input, textarea, [data-baseweb="input"], [data-baseweb="select"] {{
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            border-radius: 8px !important;
+        }}
+        
+        /* 2. The File Uploader Container */
+        [data-testid="stFileUploader"] section {{
+            background-color: #ffffff !important;
+            border-radius: 8px !important;
+            border: 2px dashed #ccc !important;
+        }}
+
+        /* 3. Force ALL text inside inputs, dropdowns, and uploader to be BLACK */
+        [data-testid="stFileUploader"] section *, 
+        input, 
+        div[data-baseweb="select"] span,
+        .stSelectbox div {{
+             color: #000000 !important;
+             -webkit-text-fill-color: #000000 !important;
+        }}
+
+        /* --- FIX FOR ERROR BOXES (White on White fix) --- */
+        /* This ensures error messages and popups are readable */
+        .stException, .stAlert, div[data-testid="stNotification"] {{
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }}
+        .stException p, .stException pre, .stAlert p {{
+            color: #000000 !important;
