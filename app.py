@@ -12,13 +12,13 @@ def apply_elite_styling():
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
         
-        /* FORCE ALL TEXT TO WHITE ACROSS ALL TABS */
+        /* FORCE ALL TEXT TO WHITE */
         html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, label, li {{
             font-family: 'Inter', sans-serif !important;
             color: #ffffff !important;
         }}
         
-        /* THE BLACK BOX FIX: FORCES SOLID DARK BACKGROUND ON ALL INPUTS */
+        /* THE BLACK BOX FIX: FORCES DARK BACKGROUND ON ALL INPUTS */
         input, textarea, select, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput>div>div>input {{
             background-color: #000000 !important;
             color: #ffffff !important;
@@ -32,7 +32,7 @@ def apply_elite_styling():
             background-size: cover; background-attachment: fixed;
         }}
 
-        /* NAVIGATION TABS */
+        /* NAVIGATION TABS: WHITE TEXT */
         button[data-baseweb="tab"] {{ background-color: transparent !important; border: none !important; }}
         button[data-baseweb="tab"] div {{ color: white !important; font-weight: 700 !important; font-size: 1.1rem !important; }}
         button[data-baseweb="tab"][aria-selected="true"] {{ border-bottom: 3px solid #00ab4e !important; }}
@@ -66,7 +66,7 @@ except Exception as e:
 # --- 3. DATA PERSISTENCE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
-    st.session_state.roadmap = {"22": [{"date": "2026-01-11", "category": "Health", "note": "Initial Baseline."}]}
+    st.session_state.roadmap = {"22": [{"date": "2026-01-11", "category": "Health", "note": "Initial Baseline Established."}]}
 
 # --- 4. NAVIGATION ---
 tabs = ["Home", "Business Offer", "Subscription Plans"]
@@ -74,23 +74,44 @@ if st.session_state.logged_in:
     tabs += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
 current_tab = st.tabs(tabs)
 
-# --- 5. PAGES ---
+# --- 5. PUBLIC PAGES ---
 with current_tab[0]: # HOME
     st.title("🛡️ ELITE PERFORMANCE")
+    st.subheader("Bespoke AI Diagnostics & Performance Optimization")
     if not st.session_state.logged_in:
+        st.divider()
         st.markdown("### Partner Portal Access")
-        u = st.text_input("Username", placeholder="admin", key="u_login_f")
-        p = st.text_input("Password", type="password", placeholder="owner2026", key="p_login_f")
+        u = st.text_input("Username", placeholder="admin", key="main_u_login_final")
+        p = st.text_input("Password", type="password", placeholder="owner2026", key="main_p_login_final")
         if st.button("Unlock Elite Portal"):
             if u == "admin" and p == "owner2026":
                 st.session_state.logged_in = True
                 st.rerun()
 
+with current_tab[1]: # BUSINESS OFFER
+    st.header("The Competitive Advantage")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.write("### ⚽ Covered Disciplines")
+        st.write("- Football (Soccer)\n- Rugby Union/League\n- Basketball\n- American Football")
+    with col_b:
+        st.write("### 💎 Dual-Track Value")
+        st.write("**Injury Prevention:** Clinical biomechanics for risk mitigation.")
+        st.write("**Performance Gain:** Tactical intelligence audits.")
+
+with current_tab[2]: # SUBSCRIPTION
+    st.header("Strategic Partnership Tiers")
+    p1, p2, p3 = st.columns(3)
+    p1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
+    p2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Full Squad Dual Audits<br>Interactive Body Map</p></div>", unsafe_allow_html=True)
+    p3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Custom 3D Scanning</p></div>", unsafe_allow_html=True)
+
+# --- 6. PROTECTED PAGES ---
 if st.session_state.logged_in:
     with current_tab[3]: # ANALYSIS ENGINE
         st.header("🎥 Live AI Technical Audit")
-        p_num = st.text_input("Target Player Number", "22", key="analysis_p_input")
-        video_file = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
+        p_num = st.text_input("Target Player Number", "22", key="analysis_p_input_master")
+        video_file = st.file_uploader("Upload Match Clip (MP4/MOV)", type=['mp4', 'mov'])
         if video_file and 'client' in locals():
             st.video(video_file)
             if st.button("Generate Dual-Track Elite Analysis"):
@@ -101,50 +122,38 @@ if st.session_state.logged_in:
                             tmp_path = tmp.name
                         
                         uploaded_file = client.files.upload(file=tmp_path)
-                        prompt = "Analyze this sports video for injury risk and tactical play. Provide clinical notes."
-                        response = client.models.generate_content(
-                            model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file]
-                        )
-                        st.session_state.roadmap[p_num].append({
-                            "date": "2026-01-11", "category": "AI Audit", "note": response.text
-                        })
+                        prompt = "Analyze this sports video. Identify 1. HEALTH (injury risk) and 2. PLAY (tactical gains)."
+                        response = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file])
                         
-                        # IMMEDIATE CLOUD STORAGE CLEANUP
+                        st.session_state.roadmap[p_num].append({"date": "2026-01-11", "category": "AI Audit", "note": response.text})
+                        
+                        # IMMEDIATE CLOUD CLEANUP
                         client.files.delete(name=uploaded_file.name)
                         os.remove(tmp_path)
-                        st.success("Audit Complete. Video cleared from cloud.")
+                        st.success("Audit Complete. Video file cleared from cloud storage.")
                     except Exception as e:
                         if "429" in str(e): st.error("🚨 AI Busy: Please wait 60 seconds.")
                         else: st.error(f"AI Failure: {e}")
 
-    with current_tab[4]: # THE PINPOINT DASHBOARD
+    with current_tab[4]: # PLAYER DASHBOARD (The Body Map)
         st.header("🩺 Biometric Injury Mapping")
-        
-        # Checking for the local image file you uploaded
-        if os.path.exists("body_map.png"):
-            fig = go.Figure()
-            # Use YOUR locally hosted image as the professional backdrop
-            fig.add_layout_image(dict(
-                source="body_map.png", xref="x", yref="y", x=0, y=1000, 
-                sizex=1000, sizey=1000, sizing="stretch", opacity=0.8, layer="below"
-            ))
-            
-            # PINPOINT THE AREA (The Star Pin)
-            fig.add_trace(go.Scatter(
-                x=[500], y=[250], mode='markers',
-                marker=dict(size=45, color="#ff4b4b", symbol="star", line=dict(width=2, color='white')),
-                hovertext="PLAYER #22: CRITICAL KNEE STABILITY ALERT"
-            ))
-            
-            fig.update_layout(width=500, height=700, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                              showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]))
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.warning("📸 Professional Backdrop Missing: Please upload 'body_map.png' to GitLab to activate the Elite view.")
+        st.write("Pins represent mechanical failure points detected by AI.")
+        # Reliable medical icon source to avoid region blocks
+        medical_man = "https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/person-rays.svg"
+        fig = go.Figure()
+        fig.add_layout_image(dict(source=medical_man, xref="x", yref="y", x=100, y=750, sizex=300, sizey=700, sizing="stretch", opacity=0.7, layer="below"))
+        fig.add_trace(go.Scatter(x=[250], y=[250], mode='markers', marker=dict(size=40, color="#ff4b4b", symbol="star", line=dict(width=2, color='white')), hovertext="PLAYER #22: ACUTE KNEE VALGUS"))
+        fig.update_layout(width=500, height=700, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis=dict(visible=False, range=[0, 500]), yaxis=dict(visible=False, range=[0, 800]))
+        st.plotly_chart(fig, use_container_width=True)
 
     with current_tab[5]: # ROADMAP
         st.header("📅 Integrated 12-Week Roadmap")
-        p_id = st.selectbox("Player", list(st.session_state.roadmap.keys()))
+        p_id = st.selectbox("View History", list(st.session_state.roadmap.keys()))
         for entry in reversed(st.session_state.roadmap[p_id]):
             st.markdown(f"<div class='roadmap-card'><strong>{entry['date']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
-            
+
+    with current_tab[6]: # ADMIN HUB
+        st.header("Elite Management Hub")
+        if st.button("Logout"):
+            st.session_state.logged_in = False
+            st.rerun()
