@@ -15,13 +15,13 @@ def apply_elite_styling():
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
         
-        /* FORCE ALL TEXT TO WHITE ACROSS EVERY PAGE */
+        /* 1. FORCE ALL TEXT TO WHITE */
         html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, label, li {{
             font-family: 'Inter', sans-serif !important;
             color: #ffffff !important;
         }}
         
-        /* FIX WHITE-ON-WHITE: FORCES DEEP BLACK BACKGROUND ON ALL INPUTS */
+        /* 2. THE BLACK BOX FIX: FORCES DEEP BLACK BACKGROUND ON ALL INPUTS */
         input, textarea, select, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput>div>div>input {{
             background-color: #000000 !important;
             color: #ffffff !important;
@@ -29,24 +29,25 @@ def apply_elite_styling():
             border-radius: 5px !important;
         }}
 
-        /* CINEMATIC BACKGROUND */
+        /* 3. CINEMATIC BACKGROUND */
         .stApp {{
             background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url("{bg_img}");
             background-size: cover; background-attachment: fixed;
         }}
 
-        /* NAVIGATION TABS: WHITE TEXT */
+        /* 4. NAVIGATION TABS: WHITE TEXT */
         button[data-baseweb="tab"] {{ background-color: transparent !important; border: none !important; }}
         button[data-baseweb="tab"] div {{ color: white !important; font-weight: 700 !important; font-size: 1.1rem !important; }}
         button[data-baseweb="tab"][aria-selected="true"] {{ border-bottom: 3px solid #00ab4e !important; }}
         
-        /* LUXURY CARDS */
+        /* 5. LUXURY CARDS */
         .luxury-card, .roadmap-card {{
             background: rgba(255, 255, 255, 0.08) !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
             border-radius: 20px !important; padding: 25px !important; margin-bottom: 15px !important;
         }}
         
+        /* 6. BUTTONS */
         .stButton>button {{ 
             border-radius: 50px !important; border: 2px solid #00ab4e !important; 
             color: white !important; background: rgba(0, 171, 78, 0.2) !important; font-weight: 700 !important;
@@ -89,100 +90,69 @@ with current_tab[0]: # HOME
                 st.session_state.logged_in = True
                 st.rerun()
 
-with current_tab[2]: # SUBSCRIPTION
-    st.header("Strategic Partnership Tiers")
-    p1, p2, p3 = st.columns(3)
-    p1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
-    p2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>3D Biometric Mesh Mapping</p></div>", unsafe_allow_html=True)
-    p3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Custom 3D Scanning</p></div>", unsafe_allow_html=True)
-
 if st.session_state.logged_in:
-    with current_tab[3]: # ANALYSIS ENGINE
+    with current_tab[3]: # ANALYSIS ENGINE (With Auto-Cleanup)
         st.header("🎥 Live AI Technical Audit")
         p_num = st.text_input("Target Player Number", "22", key="analysis_p")
         video_file = st.file_uploader("Upload Match Clip (MP4/MOV)", type=['mp4', 'mov'])
+        
         if video_file and 'client' in locals():
             st.video(video_file)
             if st.button("Generate Dual-Track Elite Analysis"):
-                with st.status("🤖 AI Processing Video...", expanded=True):
+                with st.status("🤖 AI Processing & Cleaning Storage...", expanded=True):
                     try:
+                        # 1. Save to temporary local file
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
                             tmp.write(video_file.getvalue())
                             tmp_path = tmp.name
                         
+                        # 2. Upload to Google Cloud
                         uploaded_file = client.files.upload(file=tmp_path)
-                        prompt = "Analyze this sports video. 1. HEALTH (injury risk markers). 2. PLAY (tactical improvements)."
+                        
+                        # 3. Perform Analysis
+                        prompt = "Analyze this sports video for injury risk and tactical play. Provide clinical notes."
                         response = client.models.generate_content(
                             model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file]
                         )
-                        st.session_state.roadmap[p_num].append({"date": "2026-01-11", "category": "AI Audit", "note": response.text})
+                        
+                        # 4. Save result to roadmap
+                        st.session_state.roadmap[p_num].append({
+                            "date": "2026-01-11", "category": "AI Audit", "note": response.text
+                        })
+                        
+                        # 5. IMMEDIATELY DELETE FILE FROM CLOUD TO FREE SPACE
+                        client.files.delete(name=uploaded_file.name)
+                        
+                        # 6. Delete temporary local file
                         os.remove(tmp_path)
-                        st.success("Audit Complete.")
+                        
+                        st.success("Audit Complete. Cloud storage cleared.")
                     except Exception as e:
                         if "429" in str(e):
-                            st.error("🚨 AI QUOTA EXCEEDED: The free AI engine is busy. Please wait 60 seconds.")
+                            st.error("🚨 QUOTA EXCEEDED: The AI is busy. Please wait 60 seconds.")
                         else:
                             st.error(f"AI Failure: {e}")
 
     with current_tab[4]: # THE 3D ROTATABLE DIGITAL TWIN
         st.header("🩺 3D Biometric Injury Mapping")
-        st.write("Inspect the clinical 'Digital Twin' for biomechanical alerts.")
         
-        # GENERATING A PRO MEDICAL MESH (Glass Effect)
+        # PRO MEDICAL MESH (Glass Effect)
         def create_body_mesh():
-            # Create a more organic human volume using ellipsoids
             def ellipsoid(x_c, y_c, z_c, rx, ry, rz):
-                u = np.linspace(0, 2 * np.pi, 20)
-                v = np.linspace(0, np.pi, 20)
+                u = np.linspace(0, 2 * np.pi, 20); v = np.linspace(0, np.pi, 20)
                 x = x_c + rx * np.outer(np.cos(u), np.sin(v))
                 y = y_c + ry * np.outer(np.sin(u), np.sin(v))
                 z = z_c + rz * np.outer(np.ones_like(u), np.cos(v))
                 return x.flatten(), y.flatten(), z.flatten()
-
-            # Assemble Torso, Head, and Limbs
             tx, ty, tz = ellipsoid(0, 0, 4, 1.2, 0.8, 2)   # Torso
             hx, hy, hz = ellipsoid(0, 0, 7, 0.6, 0.6, 0.7) # Head
             lx, ly, lz = ellipsoid(0.7, 0, 1.5, 0.4, 0.4, 1.5) # Left Leg
             rx, ry, rz = ellipsoid(-0.7, 0, 1.5, 0.4, 0.4, 1.5) # Right Leg
-            
             return np.concatenate([tx, hx, lx, rx]), np.concatenate([ty, hy, ly, ry]), np.concatenate([tz, hz, lz, rz])
 
         bx, by, bz = create_body_mesh()
-        
         fig = go.Figure()
-
-        # The 3D Digital Twin (Silver/Glass Medical Look)
-        fig.add_trace(go.Mesh3d(
-            x=bx, y=by, z=bz,
-            alphahull=7,
-            color='lightgray',
-            opacity=0.2,
-            name="Digital Twin"
-        ))
-
-        # THE CLINICAL PINPOINT (The Red Pulsing Alert)
-        fig.add_trace(go.Scatter3d(
-            x=[-0.7], y=[0], z=[1.5], # Pinpointed on the Right Knee area
-            mode='markers',
-            marker=dict(size=18, color='#ff4b4b', symbol='diamond', line=dict(width=3, color='white')),
-            hovertext="PLAYER #22: CRITICAL - RIGHT KNEE STABILITY ALERT"
-        ))
-
-        fig.update_layout(
-            width=800, height=800,
-            scene=dict(
-                xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False),
-                bgcolor='rgba(0,0,0,0)',
-                camera=dict(eye=dict(x=1.8, y=1.8, z=0.8))
-            ),
-            paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(l=0, r=0, t=0, b=0)
-        )
+        fig.add_trace(go.Mesh3d(x=bx, y=by, z=bz, alphahull=7, color='lightgray', opacity=0.2, name="Digital Twin"))
+        fig.add_trace(go.Scatter3d(x=[-0.7], y=[0], z=[1.5], mode='markers', marker=dict(size=18, color='#ff4b4b', symbol='diamond', line=dict(width=3, color='white'))))
+        fig.update_layout(width=800, height=800, scene=dict(xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False), bgcolor='rgba(0,0,0,0)', camera=dict(eye=dict(x=1.8, y=1.8, z=0.8))), paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=0, r=0, t=0, b=0))
         st.plotly_chart(fig, use_container_width=True)
-        st.info("💡 Rotate the model to inspect the mechanical failure zone.")
-
-    with current_tab[5]: # ROADMAP
-        st.header("📅 Integrated 12-Week Roadmap")
-        p_id = st.selectbox("Player", list(st.session_state.roadmap.keys()))
-        for entry in reversed(st.session_state.roadmap[p_id]):
-            st.markdown(f"<div class='roadmap-card'><strong>{entry['date']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
