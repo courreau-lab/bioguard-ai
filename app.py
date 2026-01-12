@@ -12,14 +12,14 @@ def apply_elite_styling():
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
         
-        /* 1. FORCE ALL TEXT TO WHITE EVERYWHERE */
+        /* 1. GLOBAL TEXT VISIBILITY: FORCE WHITE EVERYWHERE */
         html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, label, li {{
             font-family: 'Inter', sans-serif !important;
             color: #ffffff !important;
         }}
         
         /* 2. THE BLACK BOX FIX: PERMANENT DARK BACKGROUND ON ALL INPUTS */
-        /* Prevents "white-on-white" text issues on all pages */
+        /* Prevents "white-on-white" text issues */
         input, textarea, select, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput>div>div>input {{
             background-color: #000000 !important;
             color: #ffffff !important;
@@ -59,10 +59,9 @@ apply_elite_styling()
 # --- 2. AI INITIALIZATION ---
 try:
     if "GEMINI_API_KEY" in st.secrets:
-        # Initializing the 2026 Gemini 2.0 Brain
         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
     else:
-        st.warning("⚠️ AI Brain Offline: Check Streamlit Secrets.")
+        st.warning("⚠️ AI Brain Offline: Add GEMINI_API_KEY to Streamlit Secrets.")
 except Exception as e:
     st.error(f"AI Connection Failed: {e}")
 
@@ -70,6 +69,7 @@ except Exception as e:
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
     st.session_state.roadmap = {"22": [{"date": "2026-01-12", "category": "Health", "note": "System Active."}]}
+if "last_upload_time" not in st.session_state: st.session_state.last_upload_time = 0
 
 # --- 4. NAVIGATION ---
 tab_labels = ["Home", "Business Offer", "Subscription Plans"]
@@ -82,9 +82,8 @@ with tabs[0]: # HOME & LOGIN
     st.title("🛡️ ELITE PERFORMANCE")
     if not st.session_state.logged_in:
         st.markdown("### Partner Portal Access")
-        # Local variables for login to prevent global namespace errors
-        login_u = st.text_input("Username", placeholder="admin", key="u_key")
-        login_p = st.text_input("Password", type="password", placeholder="owner2026", key="p_key")
+        login_u = st.text_input("Username", placeholder="admin", key="u_login")
+        login_p = st.text_input("Password", type="password", placeholder="owner2026", key="p_login")
         if st.button("Unlock Elite Portal"):
             if login_u == "admin" and login_p == "owner2026":
                 st.session_state.logged_in = True
@@ -92,74 +91,81 @@ with tabs[0]: # HOME & LOGIN
             else:
                 st.error("Invalid credentials.")
     else:
-        st.success("Welcome, Admin.")
+        st.success("Welcome back, Admin.")
 
 with tabs[1]: # BUSINESS OFFER
     st.header("The Competitive Advantage")
-    col_l, col_r = st.columns(2)
-    with col_l:
+    col1, col2 = st.columns(2)
+    with col1:
         st.write("### ⚽ Core Disciplines")
         st.write("- Football (Soccer)\n- Rugby Union/League\n- Basketball\n- American Football")
-    with col_r:
+    with col2:
         st.write("### 💎 Value Strategy")
-        st.write("**Health:** Clinical injury risk mitigation through AI scans.")
-        st.write("**Play:** Technical and tactical audits for performance.")
+        st.write("**Health:** Clinical injury risk mitigation.")
+        st.write("**Play:** Performance and tactical audits.")
 
 with tabs[2]: # SUBSCRIPTION PLANS
     st.header("Strategic Partnership Tiers")
     c1, c2, c3 = st.columns(3)
     c1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
-    c2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Full Squad Dual Audits<br>Digital Twin Mapping</p></div>", unsafe_allow_html=True)
+    c2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Full Squad Dual Audits<br>Interactive Body Map</p></div>", unsafe_allow_html=True)
     c3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Full Clinical Integration</p></div>", unsafe_allow_html=True)
 
 # --- 6. PROTECTED PAGES ---
 if st.session_state.logged_in:
     with tabs[3]: # ANALYSIS ENGINE
         st.header("🎥 Live AI Technical Audit")
-        target_p = st.text_input("Target Player Number", "22", key="player_target")
-        vid = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
-        if vid and 'client' in locals():
-            st.video(vid)
-            if st.button("Generate Dual-Track Analysis"):
-                with st.status("🤖 AI Processing & Cleaning...", expanded=True):
-                    try:
-                        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as t:
-                            t.write(vid.getvalue())
-                            t_path = t.name
-                        
-                        up_file = client.files.upload(file=t_path)
-                        prompt = "Analyze this sports video for health risk and tactical gains."
-                        response = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, up_file])
-                        
-                        st.session_state.roadmap[target_p].append({"date": "2026-01-12", "category": "AI Audit", "note": response.text})
-                        
-                        # Auto-Cleanup
-                        client.files.delete(name=up_file.name)
-                        os.remove(t_path)
-                        st.success("Audit Complete.")
-                    except Exception as e:
-                        if "429" in str(e): st.error("🚨 AI Busy. Wait 60s.")
-                        else: st.error(f"Error: {e}")
+        target_p = st.text_input("Target Player Number", "22", key="p_target")
+        vid_file = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
+        
+        if vid_file and 'client' in locals():
+            st.video(vid_file)
+            
+            # QUOTA COOLDOWN CHECK
+            time_since_last = time.time() - st.session_state.last_upload_time
+            if time_since_last < 60:
+                st.warning(f"🕒 AI Cooldown: Please wait {int(60 - time_since_last)} seconds before the next analysis.")
+            else:
+                if st.button("Generate Dual-Track Analysis"):
+                    with st.status("🤖 AI Auditing Video...", expanded=True):
+                        try:
+                            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                                tmp.write(vid_file.getvalue())
+                                t_path = tmp.name
+                            
+                            up_file = client.files.upload(file=t_path)
+                            prompt = "Analyze this sports video for health risk and tactical gains."
+                            response = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, up_file])
+                            
+                            st.session_state.roadmap[target_p].append({"date": "2026-01-12", "category": "AI Audit", "note": response.text})
+                            st.session_state.last_upload_time = time.time()
+                            
+                            # Auto-Cleanup
+                            client.files.delete(name=up_file.name)
+                            os.remove(t_path)
+                            st.success("Audit Complete. Analysis delivered to Player Dashboard.")
+                        except Exception as e:
+                            if "429" in str(e): st.error("🚨 AI Busy: Quota exceeded. Please wait 60 seconds.")
+                            else: st.error(f"Analysis Failed: {e}")
 
-    with tabs[4]: # PLAYER DASHBOARD (CLINICAL ALIGNMENT)
+    with tabs[4]: # PLAYER DASHBOARD (ALIGNMENT FIX)
         st.header("🩺 Biometric Injury Mapping")
         
         if os.path.exists("digital_twin.png"):
-            # Encoding for 100% reliable image loading
             with open("digital_twin.png", "rb") as f_img:
-                b64_data = base64.b64encode(f_img.read()).decode()
+                b64_img = base64.b64encode(f_img.read()).decode()
             
             fig = go.Figure()
-            # Scaling fix to prevent mannequin stretching
+            # Proportional Scaling
             fig.add_layout_image(dict(
-                source=f"data:image/png;base64,{b64_data}",
+                source=f"data:image/png;base64,{b64_img}",
                 xref="x", yref="y", x=0, y=1000, 
                 sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"
             ))
             
-            # Clinical Circles & Call-outs aligned to mannequin limbs
+            # Clinical Pins Aligned to Mannequin
             fig.add_trace(go.Scatter(
-                x=[535, 530], y=[255, 165], # Aligned with Right Knee and Right Calf area
+                x=[535, 530], y=[255, 165], # Precise limb coordinates
                 mode='markers+text',
                 text=["Knee ACL", "Calf Strain"],
                 textposition="middle right",
@@ -174,13 +180,13 @@ if st.session_state.logged_in:
                               yaxis=dict(visible=False, range=[0, 1000]))
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.warning("📸 Image 'digital_twin.png' missing.")
+            st.warning("📸 Image 'digital_twin.png' missing in GitLab.")
 
     with tabs[5]: # ROADMAP
         st.header("📅 Integrated 12-Week Roadmap")
-        p_id_view = st.selectbox("Select Player", list(st.session_state.roadmap.keys()))
-        for item in reversed(st.session_state.roadmap[p_id_view]):
-            st.markdown(f"<div class='roadmap-card'><strong>{item['date']}</strong><br>{item['note']}</div>", unsafe_allow_html=True)
+        p_id = st.selectbox("Select Player", list(st.session_state.roadmap.keys()))
+        for entry in reversed(st.session_state.roadmap[p_id]):
+            st.markdown(f"<div class='roadmap-card'><strong>{entry['date']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
 
     with tabs[6]: # ADMIN HUB
         st.header("System Controls")
