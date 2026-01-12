@@ -12,14 +12,13 @@ def apply_elite_styling():
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
         
-        /* 1. GLOBAL TEXT VISIBILITY: FORCE WHITE EVERYWHERE */
+        /* FORCE WHITE TEXT EVERYWHERE */
         html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, label, li {{
             font-family: 'Inter', sans-serif !important;
             color: #ffffff !important;
         }}
         
-        /* 2. THE BLACK BOX FIX: PERMANENT DARK BACKGROUND ON ALL INPUTS */
-        /* Prevents "white-on-white" text issues */
+        /* THE BLACK BOX FIX: PERMANENT DARK BACKGROUND ON ALL INPUTS */
         input, textarea, select, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput>div>div>input {{
             background-color: #000000 !important;
             color: #ffffff !important;
@@ -27,25 +26,25 @@ def apply_elite_styling():
             border-radius: 8px !important;
         }}
 
-        /* 3. CINEMATIC BACKGROUND */
+        /* CINEMATIC STADIUM BACKGROUND */
         .stApp {{
             background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url("{bg_img}");
             background-size: cover; background-attachment: fixed;
         }}
 
-        /* 4. NAVIGATION TABS: WHITE TEXT */
+        /* NAVIGATION TABS */
         button[data-baseweb="tab"] {{ background-color: transparent !important; border: none !important; }}
         button[data-baseweb="tab"] div {{ color: white !important; font-weight: 700 !important; font-size: 1.1rem !important; }}
         button[data-baseweb="tab"][aria-selected="true"] {{ border-bottom: 3px solid #00ab4e !important; }}
         
-        /* 5. LUXURY CARDS */
+        /* LUXURY CARDS */
         .luxury-card, .roadmap-card {{
             background: rgba(255, 255, 255, 0.08) !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
             border-radius: 20px !important; padding: 25px !important; margin-bottom: 15px !important;
         }}
         
-        /* 6. BUTTONS */
+        /* ELITE BUTTONS */
         .stButton>button {{ 
             border-radius: 50px !important; border: 2px solid #00ab4e !important; 
             color: white !important; background: rgba(0, 171, 78, 0.2) !important; font-weight: 700 !important;
@@ -68,7 +67,7 @@ except Exception as e:
 # --- 3. DATA PERSISTENCE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
-    st.session_state.roadmap = {"22": [{"date": "2026-01-12", "category": "Health", "note": "System Active."}]}
+    st.session_state.roadmap = {"22": [{"date": "2026-01-12", "category": "Health", "note": "System Ready."}]}
 if "last_upload_time" not in st.session_state: st.session_state.last_upload_time = 0
 
 # --- 4. NAVIGATION ---
@@ -91,7 +90,7 @@ with tabs[0]: # HOME & LOGIN
             else:
                 st.error("Invalid credentials.")
     else:
-        st.success("Welcome back, Admin.")
+        st.success("Elite Portal Unlocked. Welcome back.")
 
 with tabs[1]: # BUSINESS OFFER
     st.header("The Competitive Advantage")
@@ -100,15 +99,15 @@ with tabs[1]: # BUSINESS OFFER
         st.write("### ⚽ Core Disciplines")
         st.write("- Football (Soccer)\n- Rugby Union/League\n- Basketball\n- American Football")
     with col2:
-        st.write("### 💎 Value Strategy")
+        st.write("### 💎 Dual-Track Strategy")
         st.write("**Health:** Clinical injury risk mitigation.")
-        st.write("**Play:** Performance and tactical audits.")
+        st.write("**Play:** Technical and tactical audits.")
 
 with tabs[2]: # SUBSCRIPTION PLANS
     st.header("Strategic Partnership Tiers")
     c1, c2, c3 = st.columns(3)
     c1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
-    c2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Full Squad Dual Audits<br>Interactive Body Map</p></div>", unsafe_allow_html=True)
+    c2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Full Squad Dual Audits<br>Digital Twin Mapping</p></div>", unsafe_allow_html=True)
     c3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Full Clinical Integration</p></div>", unsafe_allow_html=True)
 
 # --- 6. PROTECTED PAGES ---
@@ -124,7 +123,7 @@ if st.session_state.logged_in:
             # QUOTA COOLDOWN CHECK
             time_since_last = time.time() - st.session_state.last_upload_time
             if time_since_last < 60:
-                st.warning(f"🕒 AI Cooldown: Please wait {int(60 - time_since_last)} seconds before the next analysis.")
+                st.warning(f"🕒 AI Cooldown: Please wait {int(60 - time_since_last)} seconds.")
             else:
                 if st.button("Generate Dual-Track Analysis"):
                     with st.status("🤖 AI Auditing Video...", expanded=True):
@@ -143,12 +142,12 @@ if st.session_state.logged_in:
                             # Auto-Cleanup
                             client.files.delete(name=up_file.name)
                             os.remove(t_path)
-                            st.success("Audit Complete. Analysis delivered to Player Dashboard.")
+                            st.success("Audit Complete. Analysis delivered.")
                         except Exception as e:
-                            if "429" in str(e): st.error("🚨 AI Busy: Quota exceeded. Please wait 60 seconds.")
+                            if "429" in str(e): st.error("🚨 AI Busy: Quota reached. Wait 60s.")
                             else: st.error(f"Analysis Failed: {e}")
 
-    with tabs[4]: # PLAYER DASHBOARD (ALIGNMENT FIX)
+    with tabs[4]: # PLAYER DASHBOARD (PRECISION ALIGNMENT)
         st.header("🩺 Biometric Injury Mapping")
         
         if os.path.exists("digital_twin.png"):
@@ -156,16 +155,19 @@ if st.session_state.logged_in:
                 b64_img = base64.b64encode(f_img.read()).decode()
             
             fig = go.Figure()
-            # Proportional Scaling
+            # Scaling logic to ensure the body fits the chart perfectly
             fig.add_layout_image(dict(
                 source=f"data:image/png;base64,{b64_img}",
                 xref="x", yref="y", x=0, y=1000, 
                 sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"
             ))
             
-            # Clinical Pins Aligned to Mannequin
+            # --- PRECISION COORDINATES ---
+            # Adjust X (0-1000) and Y (0-1000) to move the pins
+            # Knee is roughly middle-bottom. Calf is lower.
             fig.add_trace(go.Scatter(
-                x=[535, 530], y=[255, 165], # Precise limb coordinates
+                x=[500, 480], # X positions (500 is center)
+                y=[320, 180], # Y positions (0 is bottom, 1000 is top)
                 mode='markers+text',
                 text=["Knee ACL", "Calf Strain"],
                 textposition="middle right",
@@ -180,16 +182,10 @@ if st.session_state.logged_in:
                               yaxis=dict(visible=False, range=[0, 1000]))
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.warning("📸 Image 'digital_twin.png' missing in GitLab.")
+            st.warning("📸 Image 'digital_twin.png' missing in GitLab root folder.")
 
     with tabs[5]: # ROADMAP
         st.header("📅 Integrated 12-Week Roadmap")
         p_id = st.selectbox("Select Player", list(st.session_state.roadmap.keys()))
         for entry in reversed(st.session_state.roadmap[p_id]):
             st.markdown(f"<div class='roadmap-card'><strong>{entry['date']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
-
-    with tabs[6]: # ADMIN HUB
-        st.header("System Controls")
-        if st.button("Secure Logout"):
-            st.session_state.logged_in = False
-            st.rerun()
