@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from google import genai
 import time, tempfile, os
 
-# --- 1. GLOBAL UI & LUXURY CONTRAST SHIELD ---
+# --- 1. GLOBAL UI & TOTAL VISIBILITY SHIELD ---
 st.set_page_config(page_title="Elite Performance | BioGuard AI", layout="wide")
 
 def apply_elite_styling():
@@ -12,13 +12,13 @@ def apply_elite_styling():
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
         
-        /* FORCE ALL TEXT TO WHITE ACROSS ENTIRE PLATFORM */
+        /* 1. GLOBAL TEXT VISIBILITY: FORCE WHITE */
         html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, label, li {{
             font-family: 'Inter', sans-serif !important;
             color: #ffffff !important;
         }}
         
-        /* THE BLACK BOX FIX: ENSURES READABLE INPUTS (NO WHITE-ON-WHITE) */
+        /* 2. THE BLACK BOX FIX: PERMANENT DARK BACKGROUND ON ALL INPUTS */
         input, textarea, select, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput>div>div>input {{
             background-color: #000000 !important;
             color: #ffffff !important;
@@ -26,27 +26,28 @@ def apply_elite_styling():
             border-radius: 8px !important;
         }}
 
-        /* CINEMATIC STADIUM BACKGROUND */
+        /* 3. CINEMATIC STADIUM BACKGROUND */
         .stApp {{
             background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url("{bg_img}");
             background-size: cover; background-attachment: fixed;
         }}
 
-        /* NAVIGATION TABS */
+        /* 4. NAVIGATION TABS: WHITE TEXT */
         button[data-baseweb="tab"] {{ background-color: transparent !important; border: none !important; }}
-        button[data-baseweb="tab"] div {{ color: white !important; font-weight: 700 !important; }}
+        button[data-baseweb="tab"] div {{ color: white !important; font-weight: 700 !important; font-size: 1.1rem !important; }}
         button[data-baseweb="tab"][aria-selected="true"] {{ border-bottom: 3px solid #00ab4e !important; }}
         
-        /* LUXURY CARDS */
+        /* 5. LUXURY CARDS */
         .luxury-card, .roadmap-card {{
             background: rgba(255, 255, 255, 0.08) !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            border-radius: 20px !important; padding: 25px !important;
+            border-radius: 20px !important; padding: 25px !important; margin-bottom: 15px !important;
         }}
         
+        /* 6. BUTTONS */
         .stButton>button {{ 
             border-radius: 50px !important; border: 2px solid #00ab4e !important; 
-            color: white !important; background: rgba(0, 171, 78, 0.2) !important;
+            color: white !important; background: rgba(0, 171, 78, 0.2) !important; font-weight: 700 !important;
         }}
         .stButton>button:hover {{ background: #00ab4e !important; }}
     </style>
@@ -74,85 +75,70 @@ if st.session_state.logged_in:
     tabs += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
 current_tab = st.tabs(tabs)
 
-# --- 5. PUBLIC PAGES ---
+# --- 5. PAGES ---
 with current_tab[0]: # HOME
     st.title("🛡️ ELITE PERFORMANCE")
     if not st.session_state.logged_in:
         st.markdown("### Partner Portal Access")
-        u = st.text_input("Username", placeholder="admin", key="u_login")
-        p = st.text_input("Password", type="password", placeholder="owner2026", key="p_login")
+        u = st.text_input("Username", placeholder="admin", key="u_login_master")
+        p = st.text_input("Password", type="password", placeholder="owner2026", key="p_login_master")
         if st.button("Unlock Elite Portal"):
             if u == "admin" and p == "owner2026":
                 st.session_state.logged_in = True
                 st.rerun()
 
-with current_tab[1]: # OFFER
-    st.header("The Competitive Advantage")
-    st.write("Clinical biomechanics and tactical audits for professional sport.")
-
-with current_tab[2]: # SUBSCRIPTION
-    st.header("Strategic Partnership Tiers")
-    p1, p2, p3 = st.columns(3)
-    p1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
-    p2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Digital Twin Pinpointing</p></div>", unsafe_allow_html=True)
-    p3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Full Club Integration</p></div>", unsafe_allow_html=True)
-
-# --- 6. PROTECTED PAGES ---
 if st.session_state.logged_in:
     with current_tab[3]: # ANALYSIS ENGINE
         st.header("🎥 Live AI Technical Audit")
         p_num = st.text_input("Target Player Number", "22", key="analysis_p_input")
-        video_file = st.file_uploader("Upload Match Clip (MP4/MOV)", type=['mp4', 'mov'])
+        video_file = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
         if video_file and 'client' in locals():
             st.video(video_file)
             if st.button("Generate Dual-Track Elite Analysis"):
-                with st.status("🤖 AI Processing & Storage Management...", expanded=True):
+                with st.status("🤖 AI Processing & Cleaning...", expanded=True):
                     try:
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
                             tmp.write(video_file.getvalue())
                             tmp_path = tmp.name
                         
-                        # FIXED: Proper path handling for the API
                         uploaded_file = client.files.upload(file=tmp_path)
-                        
                         prompt = "Analyze this sports video for injury risk and tactical play. Provide clinical notes."
-                        response = client.models.generate_content(
-                            model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file]
-                        )
-                        st.session_state.roadmap[p_num].append({
-                            "date": "2026-01-12", "category": "AI Audit", "note": response.text
-                        })
+                        response = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file])
                         
-                        # CLEANUP: Deleting file to free space
+                        st.session_state.roadmap[p_num].append({"date": "2026-01-12", "category": "AI Audit", "note": response.text})
+                        
+                        # CLEANUP: Free space immediately
                         client.files.delete(name=uploaded_file.name)
                         os.remove(tmp_path)
-                        st.success("Audit Complete. Cloud storage cleared.")
+                        st.success("Audit Complete. Space cleared.")
                     except Exception as e:
-                        if "429" in str(e): st.error("🚨 AI Busy: Quota exceeded. Wait 60s.")
+                        if "429" in str(e): st.error("🚨 AI Busy: Please wait 60 seconds.")
                         else: st.error(f"AI Failure: {e}")
 
-    with current_tab[4]: # THE PROFESSIONAL DIGITAL TWIN
+    with current_tab[4]: # THE PROFESSIONAL PLAYER DASHBOARD
         st.header("🩺 Biometric Injury Mapping")
+        
+        # Checking for your new 'digital_twin.png'
         if os.path.exists("digital_twin.png"):
             fig = go.Figure()
-            # Loads YOUR local digital_twin.png
+            # Loads YOUR digital twin as the medical backdrop
             fig.add_layout_image(dict(
-                source="digital_twin.png", xref="x", yref="y", x=0, y=1000, 
-                sizex=1000, sizey=1000, sizing="stretch", opacity=0.9, layer="below"
+                source="digital_twin.png", xref="x", yref="y", x=250, y=750, 
+                sizex=500, sizey=700, sizing="stretch", opacity=0.9, layer="below"
             ))
             
-            # PINPOINT (Adjust X/Y to fit your image exactly)
+            # THE PINPOINT (Adjusted for your new image's center)
             fig.add_trace(go.Scatter(
-                x=[500], y=[230], mode='markers',
+                x=[500], y=[250], mode='markers',
                 marker=dict(size=45, color="#ff4b4b", symbol="star", line=dict(width=2, color='white')),
-                hovertext="PLAYER #22: KNEE ALERT"
+                hovertext="PLAYER #22: KNEE STABILITY ALERT"
             ))
             
-            fig.update_layout(width=500, height=700, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            fig.update_layout(width=700, height=800, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                               showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]))
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.warning("📸 Digital Twin Missing: Upload 'digital_twin.png' to GitLab root folder.")
+            st.warning("📸 Image not found. Please ensure GitLab shows 'digital_twin.png' exactly.")
 
     with current_tab[5]: # ROADMAP
         st.header("📅 Integrated 12-Week Roadmap")
