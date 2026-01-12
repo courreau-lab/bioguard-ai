@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from google import genai
 import time, tempfile, os, base64
 
-# --- 1. GLOBAL UI & VISIBILITY SHIELD ---
+# --- 1. GLOBAL UI & TOTAL VISIBILITY SHIELD ---
 st.set_page_config(page_title="Elite Performance | BioGuard AI", layout="wide")
 
 def apply_elite_styling():
@@ -34,14 +34,14 @@ try:
     if "GEMINI_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
     else:
-        st.warning("⚠️ Key Missing: Add GEMINI_API_KEY to Streamlit Secrets.")
+        st.warning("⚠️ key found but not loaded. Check Secret formatting.")
 except Exception as e:
     st.error(f"AI Connection Failed: {e}")
 
 # --- 3. DATA PERSISTENCE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
-    st.session_state.roadmap = {"22": [{"date": "2026-01-12", "category": "Health", "note": "System Active."}]}
+    st.session_state.roadmap = {"22": [{"date": "2026-01-12", "category": "Health", "note": "Elite System Active."}]}
 
 # --- 4. NAVIGATION ---
 tab_labels = ["Home", "Business Offer", "Subscription Plans"]
@@ -50,25 +50,15 @@ if st.session_state.logged_in:
 tabs = st.tabs(tab_labels)
 
 # --- 5. PUBLIC PAGES ---
-with tabs[0]: # HOME
-    st.title("🛡️ ELITE PERFORMANCE")
-    if not st.session_state.logged_in:
-        u = st.text_input("Username", placeholder="admin", key="u_log_final")
-        p = st.text_input("Password", type="password", placeholder="owner2026", key="p_log_final")
-        if st.button("Unlock Elite Portal"):
-            if u == "admin" and p == "owner2026":
-                st.session_state.logged_in = True
-                st.rerun()
-
-with tabs[1]: # BUSINESS OFFER
+with tabs[1]: # BUSINESS OFFER (REINSTATED)
     st.header("The Competitive Advantage")
-    c1, c2 = st.columns(2)
-    with c1:
+    col1, col2 = st.columns(2)
+    with col1:
         st.write("### ⚽ Core Disciplines\n- Football\n- Rugby\n- Basketball")
-    with c2:
-        st.write("### 💎 Value Strategy\n**Health:** AI Injury Prevention\n**Play:** Technical Tactical Audit")
+    with col2:
+        st.write("### 💎 Value Strategy\n**Health:** Clinical injury risk mitigation.\n**Play:** Tactical Technical Audit.")
 
-with tabs[2]: # SUBSCRIPTION
+with tabs[2]: # SUBSCRIPTION (REINSTATED)
     st.header("Strategic Partnership Tiers")
     c1, c2, c3 = st.columns(3)
     c1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2></div>", unsafe_allow_html=True)
@@ -77,43 +67,44 @@ with tabs[2]: # SUBSCRIPTION
 
 # --- 6. PROTECTED PAGES ---
 if st.session_state.logged_in:
-    with tabs[3]: # ANALYSIS ENGINE (PURGE VERSION)
+    with tabs[3]: # ANALYSIS ENGINE (QUOTA RESET FIX)
         st.header("🎥 Live AI Technical Audit")
-        vf = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
-        if vf and 'client' in locals():
-            st.video(vf)
+        vid = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
+        if vid and 'client' in locals():
+            st.video(vid)
             if st.button("Generate Dual-Track Analysis"):
-                with st.status("🤖 FORCE PURGING CLOUD STORAGE..."):
+                with st.status("🤖 FORCE PURGING OLD DATA & ANALYZING..."):
                     try:
-                        # Clear zombie files to fix the "taking forever" issue
+                        # PURGE ZOMBIE FILES
                         for file in client.files.list():
                             client.files.delete(name=file.name)
                         
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
-                            tmp.write(vf.getvalue())
+                            tmp.write(vid.getvalue())
                             t_path = tmp.name
                         
                         upf = client.files.upload(file=t_path)
-                        resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=["Identify injury risk and tactical play.", upf])
-                        st.session_state.roadmap["22"].append({"date": "2026-01-12", "category": "AI", "note": resp.text})
+                        resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=["Analyze health and play.", upf])
+                        st.session_state.roadmap["22"].append({"date": "2026-01-12", "category": "AI Audit", "note": resp.text})
+                        
                         client.files.delete(name=upf.name)
                         os.remove(t_path)
                         st.success("Analysis Complete.")
                     except Exception as e:
-                        st.error(f"Quota Wait: Please wait 60s for Google to reset.")
+                        st.error(f"Quota error: Please wait 60s for reset.")
 
-    with tabs[4]: # PLAYER DASHBOARD (ALIGNMENT FIX)
+    with tabs[4]: # PLAYER DASHBOARD (ALIGNMENT RECALIBRATION)
         st.header("🩺 Biometric Injury Mapping")
         if os.path.exists("digital_twin.png"):
             with open("digital_twin.png", "rb") as f: b64 = base64.b64encode(f.read()).decode()
             fig = go.Figure()
-            # Scaling fix for holographic image
+            # Scaling fix for new holographic mannequin
             fig.add_layout_image(dict(source=f"data:image/png;base64,{b64}", xref="x", yref="y", x=0, y=1000, sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"))
             
-            # --- PIN COORDINATES (Move these to align with limbs) ---
-            # X: 0 (Left) to 1000 (Right) | Y: 0 (Bottom) to 1000 (Top)
+            # RECALIBRATED ALIGNMENT
+            # X=500 is the center. Y is height.
             fig.add_trace(go.Scatter(
-                x=[480, 475], y=[330, 180], # Centered on leg joints of holographic mannequin
+                x=[485, 515], y=[350, 200], # Precise limb placement for your hologram
                 mode='markers+text', text=["Knee ACL", "Calf Strain"], textposition="middle right",
                 textfont=dict(color="white", size=15),
                 marker=dict(size=40, color="rgba(255, 75, 75, 0.7)", symbol="circle", line=dict(width=3, color='white'))
