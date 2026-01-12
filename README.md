@@ -1,93 +1,164 @@
-# courreau-project
+import streamlit as st
+import plotly.graph_objects as go
+from google import genai
+import time, tempfile, os
 
+# --- 1. GLOBAL UI & LUXURY CONTRAST SHIELD ---
+st.set_page_config(page_title="Elite Performance | BioGuard AI", layout="wide")
 
+def apply_elite_styling():
+    bg_img = "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=2000"
+    st.markdown(f"""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+        
+        /* FORCE ALL TEXT TO WHITE ACROSS EVERY PAGE */
+        html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, label, li {{
+            font-family: 'Inter', sans-serif !important;
+            color: #ffffff !important;
+        }}
+        
+        /* PERMANENT FIX: FORCES SOLID BLACK BACKGROUND ON ALL INPUT FIELDS */
+        input, textarea, select, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput>div>div>input {{
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border: 2px solid #00ab4e !important;
+            border-radius: 8px !important;
+        }}
+        
+        /* PLACEHOLDER COLOR FIX */
+        ::placeholder {{ color: #888888 !important; opacity: 1; }}
 
-## Getting started
+        /* CINEMATIC STADIUM BACKGROUND */
+        .stApp {{
+            background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url("{bg_img}");
+            background-size: cover; background-attachment: fixed;
+        }}
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+        /* NAVIGATION TABS: WHITE TEXT & GREEN HIGHLIGHT */
+        button[data-baseweb="tab"] {{ background-color: transparent !important; border: none !important; }}
+        button[data-baseweb="tab"] div {{ color: white !important; font-weight: 700 !important; font-size: 1.1rem !important; }}
+        button[data-baseweb="tab"][aria-selected="true"] {{ border-bottom: 3px solid #00ab4e !important; }}
+        
+        /* LUXURY CARDS */
+        .luxury-card, .roadmap-card {{
+            background: rgba(255, 255, 255, 0.08) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 20px !important; padding: 25px !important; margin-bottom: 15px !important;
+        }}
+        
+        .stButton>button {{ 
+            border-radius: 50px !important; border: 2px solid #00ab4e !important; 
+            color: white !important; background: rgba(0, 171, 78, 0.2) !important; font-weight: 700 !important;
+        }}
+        .stButton>button:hover {{ background: #00ab4e !important; }}
+    </style>
+    """, unsafe_allow_html=True)
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+apply_elite_styling()
 
-## Add your files
+# --- 2. AI INITIALIZATION ---
+try:
+    if "GEMINI_API_KEY" in st.secrets:
+        # Initializing the 2026 Gemini 2.0 Client
+        client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+    else:
+        st.warning("⚠️ AI Brain Offline: Please add GEMINI_API_KEY to Streamlit Secrets.")
+except Exception as e:
+    st.error(f"AI Connection Failed: {e}")
 
-* [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+# --- 3. DATA PERSISTENCE ---
+if "logged_in" not in st.session_state: st.session_state.logged_in = False
+if "roadmap" not in st.session_state:
+    st.session_state.roadmap = {"22": [{"date": "2026-01-12", "category": "Health", "note": "Elite System Ready."}]}
 
-```
-cd existing_repo
-git remote add origin https://gitlab.com/courreau-group/courreau-project.git
-git branch -M main
-git push -uf origin main
-```
+# --- 4. NAVIGATION ---
+tabs = ["Home", "Business Offer", "Subscription Plans"]
+if st.session_state.logged_in:
+    tabs += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
+current_tab = st.tabs(tabs)
 
-## Integrate with your tools
+# --- 5. PUBLIC PAGES (Home, Offer, Pricing) ---
+with current_tab[0]: # HOME
+    st.title("🛡️ ELITE PERFORMANCE")
+    if not st.session_state.logged_in:
+        st.markdown("### Partner Portal Access")
+        u = st.text_input("Username", placeholder="admin", key="u_login_final")
+        p = st.text_input("Password", type="password", placeholder="owner2026", key="p_login_final")
+        if st.button("Unlock Elite Portal"):
+            if u == "admin" and p == "owner2026":
+                st.session_state.logged_in = True
+                st.rerun()
 
-* [Set up project integrations](https://gitlab.com/courreau-group/courreau-project/-/settings/integrations)
+with current_tab[1]: # BUSINESS OFFER
+    st.header("The Competitive Advantage")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.write("### ⚽ Core Disciplines")
+        st.write("- Football (Soccer)\n- Rugby Union/League\n- Basketball\n- American Football")
+    with col_b:
+        st.write("### 💎 Value Strategy")
+        st.write("**Health:** Injury prevention via clinical gait analysis.")
+        st.write("**Play:** Performance gains via tactical scanning audits.")
 
-## Collaborate with your team
+with current_tab[2]: # SUBSCRIPTION
+    st.header("Strategic Partnership Tiers")
+    p1, p2, p3 = st.columns(3)
+    p1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
+    p2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Full Squad Dual Audits<br>Interactive Body Map</p></div>", unsafe_allow_html=True)
+    p3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Full Clinical Integration</p></div>", unsafe_allow_html=True)
 
-* [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+# --- 6. PROTECTED PAGES ---
+if st.session_state.logged_in:
+    with current_tab[3]: # ANALYSIS ENGINE
+        st.header("🎥 Live AI Technical Audit")
+        p_num = st.text_input("Target Player Number", "22", key="analysis_p_input_final")
+        video_file = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
+        if video_file and 'client' in locals():
+            st.video(video_file)
+            if st.button("Generate Dual-Track Elite Analysis"):
+                with st.status("🤖 AI Processing & Cleaning Cloud Storage...", expanded=True):
+                    try:
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                            tmp.write(video_file.getvalue())
+                            tmp_path = tmp.name
+                        
+                        # FIXED: Correct keyword 'file' and local temp path
+                        uploaded_file = client.files.upload(file=tmp_path)
+                        
+                        prompt = "Analyze this sports video. Identify 1. HEALTH (injury risk) and 2. PLAY (tactical gains)."
+                        response = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file])
+                        
+                        st.session_state.roadmap[p_num].append({"date": "2026-01-12", "category": "AI Audit", "note": response.text})
+                        
+                        # AUTO-CLEANUP: Clear cloud storage immediately
+                        client.files.delete(name=uploaded_file.name)
+                        os.remove(tmp_path)
+                        st.success("Audit Complete. Cloud storage cleared.")
+                    except Exception as e:
+                        if "429" in str(e): st.error("🚨 AI Busy: Quota exceeded. Please wait 60 seconds.")
+                        else: st.error(f"AI Failure: {e}")
 
-## Test and Deploy
+    with current_tab[4]: # PLAYER DASHBOARD (Your Professional Image)
+        st.header("🩺 Biometric Injury Mapping")
+        if os.path.exists("digital_twin.png"):
+            fig = go.Figure()
+            # Loads YOUR local digital_twin.png as the professional backdrop
+            fig.add_layout_image(dict(source="digital_twin.png", xref="x", yref="y", x=0, y=1000, sizex=1000, sizey=1000, sizing="stretch", opacity=0.9, layer="below"))
+            fig.add_trace(go.Scatter(x=[500], y=[230], mode='markers', marker=dict(size=45, color="#ff4b4b", symbol="star", line=dict(width=2, color='white')), hovertext="PLAYER #22: KNEE ALERT"))
+            fig.update_layout(width=500, height=700, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]))
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("📸 Digital Twin Missing: Please upload 'digital_twin.png' to GitLab root folder.")
 
-Use the built-in continuous integration in GitLab.
+    with current_tab[5]: # ROADMAP
+        st.header("📅 Integrated 12-Week Roadmap")
+        p_id = st.selectbox("View History", list(st.session_state.roadmap.keys()))
+        for entry in reversed(st.session_state.roadmap[p_id]):
+            st.markdown(f"<div class='roadmap-card'><strong>{entry['date']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+    with current_tab[6]: # ADMIN
+        st.header("Elite Management Hub")
+        if st.button("Logout"):
+            st.session_state.logged_in = False
+            st.rerun()
