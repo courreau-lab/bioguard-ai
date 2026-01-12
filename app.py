@@ -75,7 +75,7 @@ if st.session_state.logged_in:
     tabs += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
 current_tab = st.tabs(tabs)
 
-# --- 5. PUBLIC PAGES (REINSTATED) ---
+# --- 5. PUBLIC PAGES (RESTORED) ---
 with current_tab[0]: # HOME
     st.title("🛡️ ELITE PERFORMANCE")
     if not st.session_state.logged_in:
@@ -95,7 +95,7 @@ with current_tab[1]: # BUSINESS OFFER
         st.write("- Football (Soccer)\n- Rugby Union/League\n- Basketball\n- American Football")
     with col2:
         st.write("### 💎 Dual-Track Strategy")
-        st.write("**Health:** Clinical injury risk mitigation through AI.")
+        st.write("**Health:** Clinical injury risk mitigation.")
         st.write("**Play:** Performance and tactical audits.")
 
 with current_tab[2]: # SUBSCRIPTION
@@ -107,30 +107,35 @@ with current_tab[2]: # SUBSCRIPTION
 
 # --- 6. PROTECTED PAGES ---
 if st.session_state.logged_in:
-    with current_tab[4]: # PLAYER DASHBOARD (SCALING & CIRCLE FIX)
+    with current_tab[4]: # PLAYER DASHBOARD (SCALING & CALL-OUT FIX)
         st.header("🩺 Biometric Injury Mapping")
         
         if os.path.exists("digital_twin.png"):
-            # Encode for reliability
+            # 1. Encode image for reliable loading
             with open("digital_twin.png", "rb") as f:
                 encoded_img = base64.b64encode(f.read()).decode()
             
             fig = go.Figure()
             
-            # IMPROVED SCALING: Fit image properly
+            # 2. PROPORTIONAL SCALING: Using contain to stop stretching
             fig.add_layout_image(dict(
                 source=f"data:image/png;base64,{encoded_img}",
-                xref="x", yref="y", x=250, y=850, 
-                sizex=500, sizey=800, # Focused proportions
+                xref="x", yref="y", x=0, y=1000, 
+                sizex=1000, sizey=1000,
                 sizing="contain", opacity=0.9, layer="below"
             ))
             
-            # CLINICAL CIRCLE (Replacing Star)
+            # 3. CLINICAL CIRCLES WITH TEXT CALL-OUTS
+            # Coordinates are tuned to a standard mannequin position
             fig.add_trace(go.Scatter(
-                x=[500], y=[230], mode='markers',
-                marker=dict(size=40, color="rgba(255, 75, 75, 0.6)", 
+                x=[500, 430], y=[230, 480], 
+                mode='markers+text',
+                text=["Knee ACL", "Calf Strain"],
+                textposition="top right",
+                textfont=dict(color="white", size=14, family="Inter"),
+                marker=dict(size=35, color="rgba(255, 75, 75, 0.6)", 
                             symbol="circle", line=dict(width=3, color='white')),
-                hovertext="PLAYER #22: KNEE ALERT"
+                hovertext=["CRITICAL: RIGHT KNEE", "MODERATE: LEFT CALF"]
             ))
             
             fig.update_layout(width=700, height=800, paper_bgcolor='rgba(0,0,0,0)', 
@@ -139,9 +144,9 @@ if st.session_state.logged_in:
                               yaxis=dict(visible=False, range=[0, 1000]))
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.warning("📸 Digital Twin Missing in GitLab.")
+            st.warning("📸 Digital Twin Missing in GitLab root folder.")
 
-    with current_tab[5]: # ROADMAP (REINSTATED)
+    with current_tab[5]: # ROADMAP
         st.header("📅 Integrated 12-Week Roadmap")
         p_id = st.selectbox("View Player History", list(st.session_state.roadmap.keys()))
         for entry in reversed(st.session_state.roadmap[p_id]):
