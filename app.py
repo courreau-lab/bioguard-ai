@@ -12,7 +12,7 @@ def apply_elite_styling():
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
         
-        /* 1. GLOBAL TEXT VISIBILITY: FORCE WHITE EVERYWHERE */
+        /* 1. FORCE ALL TEXT TO WHITE EVERYWHERE */
         html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, label, li {{
             font-family: 'Inter', sans-serif !important;
             color: #ffffff !important;
@@ -67,7 +67,7 @@ except Exception as e:
 # --- 3. DATA PERSISTENCE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
-    st.session_state.roadmap = {"22": [{"date": "2026-01-12", "category": "Health", "note": "System Ready."}]}
+    st.session_state.roadmap = {"22": [{"date": "2026-01-12", "category": "Health", "note": "Elite System Ready."}]}
 
 # --- 4. NAVIGATION ---
 tabs = ["Home", "Business Offer", "Subscription Plans"]
@@ -75,7 +75,7 @@ if st.session_state.logged_in:
     tabs += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
 current_tab = st.tabs(tabs)
 
-# --- 5. PUBLIC PAGES ---
+# --- 5. PUBLIC PAGES (REINSTATED) ---
 with current_tab[0]: # HOME
     st.title("🛡️ ELITE PERFORMANCE")
     if not st.session_state.logged_in:
@@ -87,7 +87,7 @@ with current_tab[0]: # HOME
                 st.session_state.logged_in = True
                 st.rerun()
 
-with current_tab[1]: # BUSINESS OFFER (REINSTATED)
+with current_tab[1]: # BUSINESS OFFER
     st.header("The Competitive Advantage")
     col1, col2 = st.columns(2)
     with col1:
@@ -98,7 +98,7 @@ with current_tab[1]: # BUSINESS OFFER (REINSTATED)
         st.write("**Health:** Clinical injury risk mitigation through AI.")
         st.write("**Play:** Performance and tactical audits.")
 
-with current_tab[2]: # SUBSCRIPTION (REINSTATED)
+with current_tab[2]: # SUBSCRIPTION
     st.header("Strategic Partnership Tiers")
     p1, p2, p3 = st.columns(3)
     p1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
@@ -107,57 +107,42 @@ with current_tab[2]: # SUBSCRIPTION (REINSTATED)
 
 # --- 6. PROTECTED PAGES ---
 if st.session_state.logged_in:
-    with current_tab[3]: # ANALYSIS ENGINE
-        st.header("🎥 Live AI Technical Audit")
-        p_num = st.text_input("Target Player Number", "22", key="analysis_p_input")
-        video_file = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
-        if video_file and 'client' in locals():
-            st.video(video_file)
-            if st.button("Generate Dual-Track Elite Analysis"):
-                with st.status("🤖 AI Processing & Cleaning...", expanded=True):
-                    try:
-                        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
-                            tmp.write(video_file.getvalue())
-                            tmp_path = tmp.name
-                        uploaded_file = client.files.upload(file=tmp_path)
-                        prompt = "Analyze this sports video for injury risk and tactical play. Provide clinical notes."
-                        response = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file])
-                        st.session_state.roadmap[p_num].append({"date": "2026-01-12", "category": "AI Audit", "note": response.text})
-                        client.files.delete(name=uploaded_file.name)
-                        os.remove(tmp_path)
-                        st.success("Audit Complete. Space cleared.")
-                    except Exception as e:
-                        if "429" in str(e): st.error("🚨 AI Busy: Please wait 60 seconds.")
-                        else: st.error(f"AI Failure: {e}")
-
-    with current_tab[4]: # PLAYER DASHBOARD (IMAGE FIX)
+    with current_tab[4]: # PLAYER DASHBOARD (SCALING & CIRCLE FIX)
         st.header("🩺 Biometric Injury Mapping")
+        
         if os.path.exists("digital_twin.png"):
-            # 1. ENCODE IMAGE TO BASE64 FOR RELIABLE LOADING
+            # Encode for reliability
             with open("digital_twin.png", "rb") as f:
                 encoded_img = base64.b64encode(f.read()).decode()
             
             fig = go.Figure()
-            # 2. USE BASE64 SOURCE TO ENSURE IMAGE LOADS
+            
+            # IMPROVED SCALING: Fit image properly
             fig.add_layout_image(dict(
-                source=f"data:image/png;base64,{encoded_img}", 
-                xref="x", yref="y", x=0, y=1000, 
-                sizex=1000, sizey=1000, sizing="stretch", opacity=0.9, layer="below"
+                source=f"data:image/png;base64,{encoded_img}",
+                xref="x", yref="y", x=250, y=850, 
+                sizex=500, sizey=800, # Focused proportions
+                sizing="contain", opacity=0.9, layer="below"
             ))
-            # The red star is now pinpointed on the mannequin
+            
+            # CLINICAL CIRCLE (Replacing Star)
             fig.add_trace(go.Scatter(
-                x=[500], y=[230], mode='markers', 
-                marker=dict(size=45, color="#ff4b4b", symbol="star", line=dict(width=2, color='white')), 
+                x=[500], y=[230], mode='markers',
+                marker=dict(size=40, color="rgba(255, 75, 75, 0.6)", 
+                            symbol="circle", line=dict(width=3, color='white')),
                 hovertext="PLAYER #22: KNEE ALERT"
             ))
-            fig.update_layout(width=500, height=700, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
-                              showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]))
+            
+            fig.update_layout(width=700, height=800, paper_bgcolor='rgba(0,0,0,0)', 
+                              plot_bgcolor='rgba(0,0,0,0)', showlegend=False, 
+                              xaxis=dict(visible=False, range=[0, 1000]), 
+                              yaxis=dict(visible=False, range=[0, 1000]))
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.warning("📸 Image not found. GitLab must show 'digital_twin.png' exactly.")
+            st.warning("📸 Digital Twin Missing in GitLab.")
 
-    with current_tab[5]: # ROADMAP
+    with current_tab[5]: # ROADMAP (REINSTATED)
         st.header("📅 Integrated 12-Week Roadmap")
-        p_id = st.selectbox("View History", list(st.session_state.roadmap.keys()))
+        p_id = st.selectbox("View Player History", list(st.session_state.roadmap.keys()))
         for entry in reversed(st.session_state.roadmap[p_id]):
             st.markdown(f"<div class='roadmap-card'><strong>{entry['date']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
