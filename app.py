@@ -12,7 +12,7 @@ def apply_elite_styling():
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
         
-        /* FORCE WHITE TEXT ACROSS ENTIRE PLATFORM */
+        /* FORCE ALL TEXT TO WHITE ACROSS ENTIRE PLATFORM */
         html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, label, li {{
             font-family: 'Inter', sans-serif !important;
             color: #ffffff !important;
@@ -66,7 +66,7 @@ except Exception as e:
 # --- 3. DATA PERSISTENCE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
-    st.session_state.roadmap = {"22": [{"date": "2026-01-11", "category": "Health", "note": "System Ready."}]}
+    st.session_state.roadmap = {"22": [{"date": "2026-01-12", "category": "Health", "note": "Elite System Ready."}]}
 
 # --- 4. NAVIGATION ---
 tabs = ["Home", "Business Offer", "Subscription Plans"]
@@ -74,7 +74,7 @@ if st.session_state.logged_in:
     tabs += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
 current_tab = st.tabs(tabs)
 
-# --- 5. PAGES ---
+# --- 5. PUBLIC PAGES ---
 with current_tab[0]: # HOME
     st.title("🛡️ ELITE PERFORMANCE")
     if not st.session_state.logged_in:
@@ -86,29 +86,33 @@ with current_tab[0]: # HOME
                 st.session_state.logged_in = True
                 st.rerun()
 
+with current_tab[1]: # OFFER
+    st.header("The Competitive Advantage")
+    st.write("Clinical biomechanics and tactical audits for professional sport.")
+
 with current_tab[2]: # SUBSCRIPTION
     st.header("Strategic Partnership Tiers")
     p1, p2, p3 = st.columns(3)
     p1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
     p2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Digital Twin Pinpointing</p></div>", unsafe_allow_html=True)
-    p3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Full Clinical Integration</p></div>", unsafe_allow_html=True)
+    p3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Full Club Integration</p></div>", unsafe_allow_html=True)
 
+# --- 6. PROTECTED PAGES ---
 if st.session_state.logged_in:
-    with current_tab[3]: # ANALYSIS ENGINE (FIXED UPLOAD LOGIC)
+    with current_tab[3]: # ANALYSIS ENGINE
         st.header("🎥 Live AI Technical Audit")
         p_num = st.text_input("Target Player Number", "22", key="analysis_p_input")
-        video_file = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
+        video_file = st.file_uploader("Upload Match Clip (MP4/MOV)", type=['mp4', 'mov'])
         if video_file and 'client' in locals():
             st.video(video_file)
             if st.button("Generate Dual-Track Elite Analysis"):
-                with st.status("🤖 AI Processing & Cleaning Cloud Storage...", expanded=True):
+                with st.status("🤖 AI Processing & Storage Management...", expanded=True):
                     try:
-                        # FIXED: Using tempfile to provide correct path for the API
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
                             tmp.write(video_file.getvalue())
                             tmp_path = tmp.name
                         
-                        # FIXED: Use 'file' keyword and local path to avoid syntax errors
+                        # FIXED: Proper path handling for the API
                         uploaded_file = client.files.upload(file=tmp_path)
                         
                         prompt = "Analyze this sports video for injury risk and tactical play. Provide clinical notes."
@@ -116,43 +120,42 @@ if st.session_state.logged_in:
                             model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file]
                         )
                         st.session_state.roadmap[p_num].append({
-                            "date": "2026-01-11", "category": "AI Audit", "note": response.text
+                            "date": "2026-01-12", "category": "AI Audit", "note": response.text
                         })
                         
-                        # CLEANUP: Delete from cloud immediately
+                        # CLEANUP: Deleting file to free space
                         client.files.delete(name=uploaded_file.name)
                         os.remove(tmp_path)
                         st.success("Audit Complete. Cloud storage cleared.")
                     except Exception as e:
-                        if "429" in str(e): st.error("🚨 AI Busy: Quota exceeded. Please wait 60 seconds.")
+                        if "429" in str(e): st.error("🚨 AI Busy: Quota exceeded. Wait 60s.")
                         else: st.error(f"AI Failure: {e}")
 
     with current_tab[4]: # THE PROFESSIONAL DIGITAL TWIN
         st.header("🩺 Biometric Injury Mapping")
-        
         if os.path.exists("digital_twin.png"):
             fig = go.Figure()
-            # LOAD YOUR PROFESSIONAL IMAGE AS BACKDROP
+            # Loads YOUR local digital_twin.png
             fig.add_layout_image(dict(
                 source="digital_twin.png", xref="x", yref="y", x=0, y=1000, 
                 sizex=1000, sizey=1000, sizing="stretch", opacity=0.9, layer="below"
             ))
             
-            # HIGH-TECH PINPOINT (The Star)
+            # PINPOINT (Adjust X/Y to fit your image exactly)
             fig.add_trace(go.Scatter(
-                x=[500], y=[230], mode='markers', # Adjust X/Y to fit your image exactly
+                x=[500], y=[230], mode='markers',
                 marker=dict(size=45, color="#ff4b4b", symbol="star", line=dict(width=2, color='white')),
-                hovertext="PLAYER #22: CRITICAL KNEE STABILITY ALERT"
+                hovertext="PLAYER #22: KNEE ALERT"
             ))
             
             fig.update_layout(width=500, height=700, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                               showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]))
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.warning("📸 Digital Twin Missing: Please upload 'digital_twin.png' to GitLab to activate the Elite view.")
+            st.warning("📸 Digital Twin Missing: Upload 'digital_twin.png' to GitLab root folder.")
 
     with current_tab[5]: # ROADMAP
         st.header("📅 Integrated 12-Week Roadmap")
-        p_id = st.selectbox("Player", list(st.session_state.roadmap.keys()))
+        p_id = st.selectbox("View History", list(st.session_state.roadmap.keys()))
         for entry in reversed(st.session_state.roadmap[p_id]):
             st.markdown(f"<div class='roadmap-card'><strong>{entry['date']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
