@@ -1,7 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
 from google import genai
-import time, tempfile, os
+import time, tempfile, os, base64
 
 # --- 1. GLOBAL UI & TOTAL VISIBILITY SHIELD ---
 st.set_page_config(page_title="Elite Performance | BioGuard AI", layout="wide")
@@ -19,7 +19,6 @@ def apply_elite_styling():
         }}
         
         /* 2. THE BLACK BOX FIX: PERMANENT DARK BACKGROUND ON ALL INPUTS */
-        /* This ensures no white-on-white text in any tab */
         input, textarea, select, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput>div>div>input {{
             background-color: #000000 !important;
             color: #ffffff !important;
@@ -121,7 +120,7 @@ if st.session_state.logged_in:
                             tmp.write(video_file.getvalue())
                             tmp_path = tmp.name
                         uploaded_file = client.files.upload(file=tmp_path)
-                        prompt = "Analyze this sports video for injury risk and tactical play."
+                        prompt = "Analyze this sports video for injury risk and tactical play. Provide clinical notes."
                         response = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, uploaded_file])
                         st.session_state.roadmap[p_num].append({"date": "2026-01-12", "category": "AI Audit", "note": response.text})
                         client.files.delete(name=uploaded_file.name)
@@ -131,14 +130,18 @@ if st.session_state.logged_in:
                         if "429" in str(e): st.error("🚨 AI Busy: Please wait 60 seconds.")
                         else: st.error(f"AI Failure: {e}")
 
-    with current_tab[4]: # PLAYER DASHBOARD (IMAGE ANCHOR FIX)
+    with current_tab[4]: # PLAYER DASHBOARD (IMAGE FIX)
         st.header("🩺 Biometric Injury Mapping")
-        # Checking for your digital_twin.png upload
         if os.path.exists("digital_twin.png"):
+            # 1. ENCODE IMAGE TO BASE64 FOR RELIABLE LOADING
+            with open("digital_twin.png", "rb") as f:
+                encoded_img = base64.b64encode(f.read()).decode()
+            
             fig = go.Figure()
-            # This locks the image to the full chart area
+            # 2. USE BASE64 SOURCE TO ENSURE IMAGE LOADS
             fig.add_layout_image(dict(
-                source="digital_twin.png", xref="x", yref="y", x=0, y=1000, 
+                source=f"data:image/png;base64,{encoded_img}", 
+                xref="x", yref="y", x=0, y=1000, 
                 sizex=1000, sizey=1000, sizing="stretch", opacity=0.9, layer="below"
             ))
             # The red star is now pinpointed on the mannequin
