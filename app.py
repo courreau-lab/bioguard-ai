@@ -34,7 +34,7 @@ try:
     if "GEMINI_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
     else:
-        st.warning("⚠️ AI Offline: Add your key in Streamlit Cloud Secrets.")
+        st.warning("⚠️ Key Missing: Add GEMINI_API_KEY to Streamlit Secrets.")
 except Exception as e:
     st.error(f"AI Connection Failed: {e}")
 
@@ -42,7 +42,6 @@ except Exception as e:
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
     st.session_state.roadmap = {"22": [{"date": "2026-01-12", "category": "Health", "note": "System Active."}]}
-if "last_request" not in st.session_state: st.session_state.last_request = 0
 
 # --- 4. NAVIGATION ---
 tab_labels = ["Home", "Business Offer", "Subscription Plans"]
@@ -54,25 +53,22 @@ tabs = st.tabs(tab_labels)
 with tabs[0]: # HOME
     st.title("🛡️ ELITE PERFORMANCE")
     if not st.session_state.logged_in:
-        st.markdown("### Partner Portal Access")
-        u = st.text_input("Username", placeholder="admin", key="u_log")
-        p = st.text_input("Password", type="password", placeholder="owner2026", key="p_log")
+        u = st.text_input("Username", placeholder="admin", key="u_log_final")
+        p = st.text_input("Password", type="password", placeholder="owner2026", key="p_log_final")
         if st.button("Unlock Elite Portal"):
             if u == "admin" and p == "owner2026":
                 st.session_state.logged_in = True
                 st.rerun()
 
-with tabs[1]: # BUSINESS OFFER (RESTORED)
+with tabs[1]: # BUSINESS OFFER
     st.header("The Competitive Advantage")
     c1, c2 = st.columns(2)
     with c1:
-        st.write("### ⚽ Disciplines")
-        st.write("- Football\n- Rugby\n- Basketball")
+        st.write("### ⚽ Core Disciplines\n- Football\n- Rugby\n- Basketball")
     with c2:
-        st.write("### 💎 Strategy")
-        st.write("**Health:** Clinical Injury Prevention.\n**Play:** Tactical Technical Audit.")
+        st.write("### 💎 Value Strategy\n**Health:** AI Injury Prevention\n**Play:** Technical Tactical Audit")
 
-with tabs[2]: # SUBSCRIPTION (RESTORED)
+with tabs[2]: # SUBSCRIPTION
     st.header("Strategic Partnership Tiers")
     c1, c2, c3 = st.columns(3)
     c1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2></div>", unsafe_allow_html=True)
@@ -81,46 +77,47 @@ with tabs[2]: # SUBSCRIPTION (RESTORED)
 
 # --- 6. PROTECTED PAGES ---
 if st.session_state.logged_in:
-    with tabs[3]: # ANALYSIS ENGINE
+    with tabs[3]: # ANALYSIS ENGINE (PURGE VERSION)
         st.header("🎥 Live AI Technical Audit")
         vf = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
         if vf and 'client' in locals():
             st.video(vf)
-            # COOLDOWN LOGIC
-            cooldown = 60 - (time.time() - st.session_state.last_request)
-            if cooldown > 0:
-                st.warning(f"🕒 AI Cooling Down. Please wait {int(cooldown)} seconds.")
-            else:
-                if st.button("Generate Dual-Track Analysis"):
-                    with st.status("🤖 Analyzing..."):
-                        try:
-                            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
-                                tmp.write(vf.getvalue())
-                                t_path = tmp.name
-                            upf = client.files.upload(file=t_path)
-                            resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=["Analyze video.", upf])
-                            st.session_state.roadmap["22"].append({"date": "2026-01-12", "category": "AI", "note": resp.text})
-                            st.session_state.last_request = time.time()
-                            client.files.delete(name=upf.name)
-                            os.remove(t_path)
-                            st.success("Analysis Complete.")
-                        except Exception as e:
-                            st.error(f"Quota reached. Wait 60s.")
+            if st.button("Generate Dual-Track Analysis"):
+                with st.status("🤖 FORCE PURGING CLOUD STORAGE..."):
+                    try:
+                        # Clear zombie files to fix the "taking forever" issue
+                        for file in client.files.list():
+                            client.files.delete(name=file.name)
+                        
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                            tmp.write(vf.getvalue())
+                            t_path = tmp.name
+                        
+                        upf = client.files.upload(file=t_path)
+                        resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=["Identify injury risk and tactical play.", upf])
+                        st.session_state.roadmap["22"].append({"date": "2026-01-12", "category": "AI", "note": resp.text})
+                        client.files.delete(name=upf.name)
+                        os.remove(t_path)
+                        st.success("Analysis Complete.")
+                    except Exception as e:
+                        st.error(f"Quota Wait: Please wait 60s for Google to reset.")
 
     with tabs[4]: # PLAYER DASHBOARD (ALIGNMENT FIX)
         st.header("🩺 Biometric Injury Mapping")
         if os.path.exists("digital_twin.png"):
             with open("digital_twin.png", "rb") as f: b64 = base64.b64encode(f.read()).decode()
             fig = go.Figure()
+            # Scaling fix for holographic image
             fig.add_layout_image(dict(source=f"data:image/png;base64,{b64}", xref="x", yref="y", x=0, y=1000, sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"))
             
-            # COORDINATE FIX: Centered on the holographic body
+            # --- PIN COORDINATES (Move these to align with limbs) ---
+            # X: 0 (Left) to 1000 (Right) | Y: 0 (Bottom) to 1000 (Top)
             fig.add_trace(go.Scatter(
-                x=[500, 500], y=[330, 210], # Aligned with Knee and Calf on a centered mannequin
+                x=[480, 475], y=[330, 180], # Centered on leg joints of holographic mannequin
                 mode='markers+text', text=["Knee ACL", "Calf Strain"], textposition="middle right",
                 textfont=dict(color="white", size=15),
                 marker=dict(size=40, color="rgba(255, 75, 75, 0.7)", symbol="circle", line=dict(width=3, color='white'))
             ))
             fig.update_layout(width=800, height=800, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]))
             st.plotly_chart(fig, use_container_width=True)
-        else: st.warning("📸 digital_twin.png missing from GitLab.")
+        else: st.warning("📸 digital_twin.png not found.")
