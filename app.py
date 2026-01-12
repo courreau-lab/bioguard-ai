@@ -12,13 +12,14 @@ def apply_elite_styling():
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
         
-        /* 1. GLOBAL TEXT VISIBILITY: FORCE WHITE */
+        /* 1. GLOBAL TEXT VISIBILITY: FORCE WHITE EVERYWHERE */
         html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, label, li {{
             font-family: 'Inter', sans-serif !important;
             color: #ffffff !important;
         }}
         
-        /* 2. THE BLACK BOX FIX: FORCES DARK BACKGROUND ON ALL INPUTS */
+        /* 2. THE BLACK BOX FIX: PERMANENT DARK BACKGROUND ON ALL INPUTS */
+        /* This ensures no white-on-white text in any tab */
         input, textarea, select, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput>div>div>input {{
             background-color: #000000 !important;
             color: #ffffff !important;
@@ -44,6 +45,7 @@ def apply_elite_styling():
             border-radius: 20px !important; padding: 25px !important; margin-bottom: 15px !important;
         }}
         
+        /* 6. BUTTONS */
         .stButton>button {{ 
             border-radius: 50px !important; border: 2px solid #00ab4e !important; 
             color: white !important; background: rgba(0, 171, 78, 0.2) !important; font-weight: 700 !important;
@@ -74,7 +76,7 @@ if st.session_state.logged_in:
     tabs += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
 current_tab = st.tabs(tabs)
 
-# --- 5. PAGES ---
+# --- 5. PUBLIC PAGES ---
 with current_tab[0]: # HOME
     st.title("🛡️ ELITE PERFORMANCE")
     if not st.session_state.logged_in:
@@ -86,26 +88,27 @@ with current_tab[0]: # HOME
                 st.session_state.logged_in = True
                 st.rerun()
 
-with current_tab[1]: # BUSINESS OFFER (RESTORED)
+with current_tab[1]: # BUSINESS OFFER (REINSTATED)
     st.header("The Competitive Advantage")
     col1, col2 = st.columns(2)
     with col1:
-        st.write("### ⚽ Disciplines")
-        st.write("- Football (Soccer)\n- Rugby\n- Basketball\n- American Football")
+        st.write("### ⚽ Core Disciplines")
+        st.write("- Football (Soccer)\n- Rugby Union/League\n- Basketball\n- American Football")
     with col2:
         st.write("### 💎 Dual-Track Strategy")
-        st.write("**Health:** Clinical injury risk mitigation.")
-        st.write("**Play:** Technical tactical audits.")
+        st.write("**Health:** Clinical injury risk mitigation through AI.")
+        st.write("**Play:** Performance and tactical audits.")
 
-with current_tab[2]: # SUBSCRIPTION (RESTORED)
+with current_tab[2]: # SUBSCRIPTION (REINSTATED)
     st.header("Strategic Partnership Tiers")
     p1, p2, p3 = st.columns(3)
     p1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
     p2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Full Squad Dual Audits<br>Digital Twin Mapping</p></div>", unsafe_allow_html=True)
     p3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Full Clinical Integration</p></div>", unsafe_allow_html=True)
 
+# --- 6. PROTECTED PAGES ---
 if st.session_state.logged_in:
-    with current_tab[3]: # ANALYSIS ENGINE (FIXED)
+    with current_tab[3]: # ANALYSIS ENGINE
         st.header("🎥 Live AI Technical Audit")
         p_num = st.text_input("Target Player Number", "22", key="analysis_p_input")
         video_file = st.file_uploader("Upload Match Clip", type=['mp4', 'mov'])
@@ -125,17 +128,27 @@ if st.session_state.logged_in:
                         os.remove(tmp_path)
                         st.success("Audit Complete. Space cleared.")
                     except Exception as e:
-                        if "429" in str(e): st.error("🚨 AI Busy: Please wait 60s.")
+                        if "429" in str(e): st.error("🚨 AI Busy: Please wait 60 seconds.")
                         else: st.error(f"AI Failure: {e}")
 
-    with current_tab[4]: # PLAYER DASHBOARD (IMAGE FIX)
+    with current_tab[4]: # PLAYER DASHBOARD (IMAGE ANCHOR FIX)
         st.header("🩺 Biometric Injury Mapping")
+        # Checking for your digital_twin.png upload
         if os.path.exists("digital_twin.png"):
             fig = go.Figure()
-            # Loads YOUR digital_twin.png exactly
-            fig.add_layout_image(dict(source="digital_twin.png", xref="x", yref="y", x=0, y=1000, sizex=1000, sizey=1000, sizing="stretch", opacity=0.9, layer="below"))
-            fig.add_trace(go.Scatter(x=[500], y=[230], mode='markers', marker=dict(size=45, color="#ff4b4b", symbol="star", line=dict(width=2, color='white')), hovertext="KNEE ALERT"))
-            fig.update_layout(width=500, height=700, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]))
+            # This locks the image to the full chart area
+            fig.add_layout_image(dict(
+                source="digital_twin.png", xref="x", yref="y", x=0, y=1000, 
+                sizex=1000, sizey=1000, sizing="stretch", opacity=0.9, layer="below"
+            ))
+            # The red star is now pinpointed on the mannequin
+            fig.add_trace(go.Scatter(
+                x=[500], y=[230], mode='markers', 
+                marker=dict(size=45, color="#ff4b4b", symbol="star", line=dict(width=2, color='white')), 
+                hovertext="PLAYER #22: KNEE ALERT"
+            ))
+            fig.update_layout(width=500, height=700, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
+                              showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]))
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("📸 Image not found. GitLab must show 'digital_twin.png' exactly.")
