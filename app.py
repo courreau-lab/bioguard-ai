@@ -22,7 +22,7 @@ def apply_elite_styling():
         button[data-baseweb="tab"] div {{ color: white !important; font-weight: 700 !important; font-size: 1.1rem !important; }}
         button[data-baseweb="tab"][aria-selected="true"] {{ border-bottom: 3px solid #00ab4e !important; }}
         .luxury-card, .roadmap-card {{ background: rgba(255, 255, 255, 0.08) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; border-radius: 20px !important; padding: 25px !important; margin-bottom: 15px !important; }}
-        .stButton>button {{ border-radius: 50px !important; border: 2px solid #00ab4e !important; color: white !important; background: rgba(0, 171, 78, 0.2) !important; font-weight: 700 !important; }}
+        .stButton>button {{ border-radius: 50px !important; border: 2px solid #00ab4e !important; color: white !important; background: rgba(0, 171, 78, 0.2) !important; }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -42,72 +42,9 @@ except Exception as e:
 # --- 3. DATA PERSISTENCE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
-    st.session_state.roadmap = {"22": [{"date": "2026-01-18", "category": "System", "note": "Performance Engine Ready."}]}
+    st.session_state.roadmap = {"22": [{"date": "2026-01-18", "category": "System", "note": "Elite Performance Engine Ready."}]}
 
 # --- 4. NAVIGATION ---
-tab_names = ["Home", "Business Offer", "Subscription Plans", "Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
+tab_names = ["Home", "Business Offer", "Subscription Plans", "Analysis Engine", "Player Dashboard", "12-Week Roadmap"]
 if not st.session_state.logged_in:
     tabs = st.tabs(tab_names[:3])
-else:
-    tabs = st.tabs(tab_names)
-
-with tabs[0]: # LOGIN
-    st.title("🛡️ ELITE PERFORMANCE")
-    if not st.session_state.logged_in:
-        u = st.text_input("Username", value="admin", key="u_final_log")
-        p = st.text_input("Password", type="password", placeholder="owner2026", key="p_final_log")
-        if st.button("Unlock Elite Portal"):
-            if u == "admin" and p == "owner2026":
-                st.session_state.logged_in = True
-                st.rerun()
-
-if st.session_state.logged_in:
-    with tabs[3]: # ANALYSIS ENGINE
-        st.header("🎥 Technical Performance Audit")
-        t_desc = st.text_input("Player Description", placeholder="e.g. Number 10, blue boots")
-        v_file = st.file_uploader("Upload Video Clip", type=['mp4', 'mov'])
-        
-        if v_file and 'client' in locals():
-            st.video(v_file)
-            if st.button("Generate Performance Plan & Summary"):
-                with st.status("🤖 Analyzing... (Paid Tier: High Speed)"):
-                    try:
-                        for f in client.files.list(): client.files.delete(name=f.name)
-                        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
-                            tmp.write(v_file.getvalue()); t_path = tmp.name
-                        up_f = client.files.upload(file=t_path)
-                        
-                        prompt = f"Analyze player {t_desc}. Provide Summary, Technical Gains, and 1-Week Plan."
-                        resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, up_f])
-                        
-                        st.session_state.roadmap["22"].append({"date": "2026-01-18", "category": "AI Performance Plan", "note": resp.text})
-                        client.files.delete(name=up_f.name); os.remove(t_path)
-                        st.success("✅ AUDIT COMPLETE! Review the '12-Week Roadmap' tab.")
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-
-    with tabs[4]: # PLAYER DASHBOARD (PRECISION MIDLINE ALIGNMENT)
-        st.header("🩺 Biometric Injury Mapping")
-        if os.path.exists("digital_twin.png"):
-            with open("digital_twin.png", "rb") as f_bin: b64 = base64.b64encode(f_bin.read()).decode()
-            fig = go.Figure()
-            # FIX: Properly closed syntax and scaling
-            fig.add_layout_image(dict(
-                source=f"data:image/png;base64,{b64}", 
-                xref="x", yref="y", x=0, y=1000, 
-                sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"
-            ))
-            # RECALIBRATED: Midline Alignment (X=500) for centered portrait mannequin
-            fig.add_trace(go.Scatter(
-                x=[500, 500], y=[235, 125], # Knee and Calf midline alignment
-                mode='markers+text', text=["Knee ACL", "Calf Strain"], textposition="middle right",
-                textfont=dict(color="white", size=15),
-                marker=dict(size=40, color="rgba(255, 75, 75, 0.7)", symbol="circle", line=dict(width=3, color='white'))
-            ))
-            fig.update_layout(width=800, height=800, paper_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]))
-            st.plotly_chart(fig, use_container_width=True)
-
-    with tabs[5]: # ROADMAP
-        st.header("📅 Integrated Performance Roadmap")
-        for entry in reversed(st.session_state.roadmap["22"]):
-            st.markdown(f"<div class='roadmap-card'><strong>{entry['date']} - {entry['category']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
