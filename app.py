@@ -29,11 +29,10 @@ def apply_elite_styling():
 apply_elite_styling()
 
 # --- 2. AI INITIALIZATION ---
-if "last_ai_time" not in st.session_state: st.session_state.last_ai_time = 0
-
 try:
     if "GEMINI_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+        # Clear zombie files to reset system state
         for f in client.files.list(): client.files.delete(name=f.name)
     else:
         st.warning("⚠️ Key Missing: Add GEMINI_API_KEY to Streamlit Secrets.")
@@ -43,35 +42,32 @@ except Exception as e:
 # --- 3. DATA & LOGIN STATE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
-    st.session_state.roadmap = {"22": [{"date": "2026-01-18", "category": "System", "note": "Performance Engine Ready."}]}
+    st.session_state.roadmap = {"22": [{"date": "2026-01-18", "category": "System", "note": "Elite System Active."}]}
 
 # --- 4. NAVIGATION LOGIC ---
-# Dynamic labels: hide protected tabs until logged in
 tab_labels = ["Home", "Business Offer", "Subscription Plans"]
 if st.session_state.logged_in:
     tab_labels += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap"]
 tabs = st.tabs(tab_labels)
 
-with tabs[0]: # HOME & LOGIN INTERFACE
+with tabs[0]: # HOME & LOGIN
     st.title("🛡️ ELITE PERFORMANCE")
     if not st.session_state.logged_in:
         st.markdown("### Partner Portal Login")
-        user = st.text_input("Username", placeholder="admin", key="u_login")
-        pw = st.text_input("Password", type="password", placeholder="owner2026", key="p_login")
-        if st.button("Unlock Private Portal"):
-            if user == "admin" and pw == "owner2026":
+        u = st.text_input("Username", value="admin", key="u_login")
+        p = st.text_input("Password", type="password", placeholder="owner2026", key="p_login")
+        if st.button("Unlock Portal"):
+            if u == "admin" and p == "owner2026":
                 st.session_state.logged_in = True
                 st.rerun()
-            else:
-                st.error("Invalid credentials.")
     else:
-        st.success("Welcome, Admin. Use the tabs above to access your tools.")
+        st.success("Admin Access Granted.")
 
 with tabs[1]: # BUSINESS OFFER
     st.header("The Competitive Advantage")
-    st.write("### 💎 Value Strategy\n**Health:** AI injury risk mitigation.\n**Play:** Tactical technical performance audits.")
+    st.write("### 💎 Value Strategy\n- **Health:** AI clinical injury risk mitigation\n- **Play:** Tactical performance audits")
 
-with tabs[2]: # SUBSCRIPTION PLANS
+with tabs[2]: # SUBSCRIPTIONS
     st.header("Strategic Partnership Tiers")
     c1, c2, c3 = st.columns(3)
     c1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2></div>", unsafe_allow_html=True)
@@ -81,23 +77,39 @@ with tabs[2]: # SUBSCRIPTION PLANS
 if st.session_state.logged_in:
     with tabs[3]: # ANALYSIS ENGINE
         st.header("🎥 Technical Performance Audit")
-        t_desc = st.text_input("Player Description", placeholder="e.g. No. 10 blue boots")
+        t_desc = st.text_input("Player Description", placeholder="e.g. Number 10 blue boots")
         vid = st.file_uploader("Upload Video", type=['mp4', 'mov'])
         if vid and 'client' in locals():
             st.video(vid)
-            if st.button("Generate Performance Plan"):
-                with st.status("🤖 Analyzing..."):
+            if st.button("Generate Performance Plan & Summary"):
+                with st.status("🤖 AI ENGINE INITIALIZING...") as status:
                     try:
+                        # 1. Clear cloud storage
                         for f in client.files.list(): client.files.delete(name=f.name)
+                        
+                        # 2. Upload to AI
+                        status.update(label="🎥 UPLOADING VIDEO TO CLOUD...")
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
                             tmp.write(vid.getvalue()); t_path = tmp.name
                         upf = client.files.upload(file=t_path)
-                        prompt = f"Analyze player {t_desc}. Provide Summary and 1-Week Plan."
+                        
+                        # 3. Wait for AI processing
+                        status.update(label="🧠 AI PROCESSING VIDEO (Reading Frames)...")
+                        while upf.state.name == "PROCESSING":
+                            time.sleep(2)
+                            upf = client.files.get(name=upf.name)
+                        
+                        # 4. Generate Content
+                        status.update(label="📝 BUILDING PERFORMANCE SUMMARY & PLAN...")
+                        prompt = f"Analyze player {t_desc}. Provide Summary and 1-Week Training Plan."
                         resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, upf])
+                        
+                        # 5. Save and Clean
                         st.session_state.roadmap["22"].append({"date": "2026-01-18", "category": "AI Report", "note": resp.text})
                         client.files.delete(name=upf.name); os.remove(t_path)
-                        st.success("✅ Audit Complete. Review the '12-Week Roadmap' tab.")
-                    except Exception as e: st.error(f"Error: {e}")
+                        st.balloons()
+                        st.success("✅ AUDIT COMPLETE! Review the '12-Week Roadmap' tab.")
+                    except Exception as e: st.error(f"Processing Error: {e}")
 
     with tabs[4]: # PLAYER DASHBOARD (CENTERED ALIGNMENT)
         st.header("🩺 Biometric Injury Mapping")
