@@ -44,7 +44,7 @@ def apply_elite_styling():
         
         .stButton>button {{ 
             border-radius: 50px !important; border: 2px solid #00ab4e !important; 
-            color: white !important; background: rgba(0, 171, 78, 0.2) !important; font-weight: 700 !important;
+            color: white !important; background: rgba(0, 171, 78, 0.2) !important;
         }}
     </style>
     """, unsafe_allow_html=True)
@@ -79,25 +79,82 @@ tabs = st.tabs(tab_names)
 with tabs[0]: # HOME & LOGIN
     st.title("🛡️ ELITE PERFORMANCE")
     if not st.session_state.logged_in:
+        st.markdown("### Partner Portal Access")
         u_val = st.text_input("Username", placeholder="admin", key="u_login_final")
         p_val = st.text_input("Password", type="password", placeholder="owner2026", key="p_login_final")
         if st.button("Unlock Elite Portal"):
             if u_val == "admin" and p_val == "owner2026":
                 st.session_state.logged_in = True
                 st.rerun()
-            else:
-                st.error("Invalid credentials.")
 
 with tabs[1]: # BUSINESS OFFER
     st.header("The Competitive Advantage")
     col1, col2 = st.columns(2)
     with col1:
-        st.write("### ⚽ Core Disciplines\n- Football\n- Rugby\n- Basketball")
+        st.write("### ⚽ Core Disciplines\n- Football\n- Rugby\n- Basketball\n- American Football")
     with col2:
-        st.write("### 💎 Value Strategy\n**Health:** AI injury risk mitigation.\n**Play:** Tactical audits.")
+        st.write("### 💎 Value Strategy\n**Health:** AI clinical injury risk mitigation.\n**Play:** Tactical technical performance audits.")
 
 with tabs[2]: # SUBSCRIPTION PLANS
     st.header("Strategic Partnership Tiers")
     c1, c2, c3 = st.columns(3)
-    c1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2></div>", unsafe_allow_html=True)
-    c2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2></div>", unsafe_allow_html=
+    c1.markdown("<div class='luxury-card'><h3>Individual</h3><h2>£29/mo</h2><p>Monthly Health Audit</p></div>", unsafe_allow_html=True)
+    c2.markdown("<div class='luxury-card' style='border-color: #00ab4e !important;'><h3>Squad Pro</h3><h2>£199/mo</h2><p>Full Squad Dual Audits<br>Digital Twin Mapping</p></div>", unsafe_allow_html=True)
+    c3.markdown("<div class='luxury-card'><h3>Elite Academy</h3><h2>£POA</h2><p>Full Clinical Integration</p></div>", unsafe_allow_html=True)
+
+# --- 6. PROTECTED PAGES ---
+if st.session_state.logged_in:
+    with tabs[3]: # ANALYSIS ENGINE
+        st.header("🎥 Technical Performance Audit")
+        t_desc = st.text_input("Player to Follow", placeholder="e.g., Player number 7 in red boots")
+        v_file = st.file_uploader("Upload Clip (Max 20MB)", type=['mp4', 'mov'])
+        
+        if v_file and 'client' in locals():
+            st.video(v_file)
+            if v_file.size > 20 * 1024 * 1024:
+                st.error("❌ Video too large. Reduce to under 20MB.")
+            else:
+                elapsed = time.time() - st.session_state.last_ai_time
+                if elapsed < 60:
+                    st.warning(f"🕒 AI Cooling Down: Wait {int(60 - elapsed)}s.")
+                else:
+                    if st.button("Generate Performance Plan & Summary"):
+                        with st.status("🤖 Analyzing... results will save to Roadmap tab"):
+                            try:
+                                for f in client.files.list(): client.files.delete(name=f.name)
+                                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                                    tmp.write(v_file.getvalue()); t_path = tmp.name
+                                up_f = client.files.upload(file=t_path)
+                                prompt = f"Analyze player: {t_desc}. Provide Performance Summary, Technical Gains, and 1-Week Plan."
+                                resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, up_f])
+                                st.session_state.roadmap["22"].append({"date": "2026-01-18", "category": "AI Performance Plan", "note": resp.text})
+                                st.session_state.last_ai_time = time.time()
+                                client.files.delete(name=up_f.name); os.remove(t_path)
+                                st.success("✅ Audit Complete. Go to '12-Week Roadmap' to see your plan.")
+                            except Exception: st.error("Quota reached. Wait 60s.")
+
+    with tabs[4]: # PLAYER DASHBOARD (ALIGNMENT FIX)
+        st.header("🩺 Biometric Injury Mapping")
+        if os.path.exists("digital_twin.png"):
+            with open("digital_twin.png", "rb") as f_bin: b64 = base64.b64encode(f_bin.read()).decode()
+            fig = go.Figure()
+            # Scaling logic for portrait mannequin
+            fig.add_layout_image(dict(
+                source=f"data:image/png;base64,{b64}", 
+                xref="x", yref="y", x=0, y=1000, 
+                sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"
+            ))
+            # RECALIBRATED: Midline Alignment (X=500) for centered mannequin
+            fig.add_trace(go.Scatter(
+                x=[500, 500], y=[235, 125], # Centered Knee and Calf
+                mode='markers+text', text=["Knee ACL", "Calf Strain"], textposition="middle right",
+                textfont=dict(color="white", size=15),
+                marker=dict(size=40, color="rgba(255, 75, 75, 0.7)", symbol="circle", line=dict(width=3, color='white'))
+            ))
+            fig.update_layout(width=800, height=800, paper_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]))
+            st.plotly_chart(fig, use_container_width=True)
+
+    with tabs[5]: # ROADMAP
+        st.header("📅 Integrated Performance Roadmap")
+        for entry in reversed(st.session_state.roadmap["22"]):
+            st.markdown(f"<div class='roadmap-card'><strong>{entry['date']} - {entry['category']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
