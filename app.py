@@ -35,23 +35,23 @@ if "last_ai_time" not in st.session_state: st.session_state.last_ai_time = 0
 try:
     if "GEMINI_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-        # FORCE PURGE: Deletes zombie files on every boot to clear quota
+        # FORCE PURGE: Clears files immediately on boot to prevent "Resource Exhausted"
         for f in client.files.list(): client.files.delete(name=f.name)
     else:
-        st.warning("⚠️ Secret missing. Add GEMINI_API_KEY to Streamlit Secrets.")
+        st.warning("⚠️ Secret missing. Add GEMINI_API_KEY to Streamlit Cloud Secrets.")
 except Exception as e:
     st.error(f"AI Connection Failed: {e}")
 
 # --- 3. DATA & LOGIN ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "roadmap" not in st.session_state:
-    st.session_state.roadmap = {"22": [{"date": "2026-01-18", "category": "System", "note": "Elite System Active."}]}
+    st.session_state.roadmap = {"22": [{"date": "2026-01-18", "category": "Health", "note": "Elite System Active."}]}
 
 # --- 4. NAVIGATION ---
-tab_labels = ["Home", "Business Offer", "Subscription Plans"]
+tab_names = ["Home", "Business Offer", "Subscription Plans"]
 if st.session_state.logged_in:
-    tab_labels += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
-tabs = st.tabs(tab_labels)
+    tab_names += ["Analysis Engine", "Player Dashboard", "12-Week Roadmap", "Admin Hub"]
+tabs = st.tabs(tab_names)
 
 with tabs[0]: # HOME
     st.title("🛡️ ELITE PERFORMANCE")
@@ -66,64 +66,47 @@ with tabs[0]: # HOME
 if st.session_state.logged_in:
     with tabs[3]: # ANALYSIS ENGINE
         st.header("🎥 Technical Performance Audit")
+        target_desc = st.text_input("Player Description", placeholder="e.g., Player number 10 in blue kit")
+        vid = st.file_uploader("Upload Clip (Max 20MB)", type=['mp4', 'mov'])
         
-        # PLAYER HIGHLIGHT INPUT
-        target_desc = st.text_input("Player Description", placeholder="e.g., Player wearing red boots number 7")
-        target_p = st.text_input("Store to Player ID", "22")
-        
-        vid = st.file_uploader("Upload Clip (12MB version)", type=['mp4', 'mov'])
         if vid and 'client' in locals():
             st.video(vid)
             elapsed = time.time() - st.session_state.last_ai_time
             if elapsed < 60:
                 st.warning(f"🕒 AI Cooling Down: Wait {int(60 - elapsed)}s for next audit.")
             else:
-                if st.button("Generate Performance Plan & Summary"):
-                    with st.status("🤖 Auditing Player Performance..."):
+                if st.button("Run AI Performance Audit"):
+                    with st.status("🤖 Analyzing... (Results save to Roadmap)"):
                         try:
-                            # Purge storage
                             for f in client.files.list(): client.files.delete(name=f.name)
-                            
                             with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
                                 tmp.write(vid.getvalue()); t_path = tmp.name
-                            
                             up_f = client.files.upload(file=t_path)
                             
-                            # DETAILED PROMPT FOR PLAN & SUMMARY
-                            prompt = f"""
-                            Act as an elite sports scientist. Focus on the player described as: {target_desc}.
-                            1. Provide a detailed Performance Summary of their movements.
-                            2. Identify specific Technical Gains to work on.
-                            3. Create a 1-week Performance Plan to address clinical injury risks and tactical improvement.
-                            """
+                            # THE "PLAN" PROMPT
+                            prompt = f"Act as an elite scout. Focus on player: {target_desc}. Provide: 1) Performance Summary, 2) Technical Gains, 3) 1-Week Training Plan."
                             
                             resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, up_f])
-                            
-                            st.session_state.roadmap[target_p].append({
-                                "date": "2026-01-18", 
-                                "category": "AI Audit", 
-                                "note": resp.text
-                            })
+                            st.session_state.roadmap["22"].append({"date": "2026-01-18", "category": "AI Performance Plan", "note": resp.text})
                             st.session_state.last_ai_time = time.time()
                             client.files.delete(name=up_f.name); os.remove(t_path)
-                            st.success("Analysis Delivered to Roadmap.")
-                        except Exception as e:
-                            st.error(f"Quota issue: Please wait 60s for Google reset.")
+                            st.success("✅ Audit Complete. Review the '12-Week Roadmap' tab.")
+                        except Exception: st.error("Quota reached. Wait 60s.")
 
-    with tabs[4]: # PLAYER DASHBOARD (ALIGNMENT FIX)
+    with tabs[4]: # PLAYER DASHBOARD
         st.header("🩺 Biometric Injury Mapping")
         if os.path.exists("digital_twin.png"):
             with open("digital_twin.png", "rb") as f_bin: b64 = base64.b64encode(f_bin.read()).decode()
             fig = go.Figure()
-            # Scaling logic for portrait mannequin
+            # FIXED SYNTAX & SCALING
             fig.add_layout_image(dict(
                 source=f"data:image/png;base64,{b64}", 
                 xref="x", yref="y", x=0, y=1000, 
                 sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"
             ))
-            # RECALIBRATED: Midline Alignment (X=500) for centered mannequin
+            # RECALIBRATED: Midline Alignment (X=500)
             fig.add_trace(go.Scatter(
-                x=[500, 500], y=[235, 125], # Centered Knee and Calf
+                x=[500, 500], y=[235, 125], 
                 mode='markers+text', text=["Knee ACL", "Calf Strain"], textposition="middle right",
                 textfont=dict(color="white", size=15),
                 marker=dict(size=40, color="rgba(255, 75, 75, 0.7)", symbol="circle", line=dict(width=3, color='white'))
@@ -132,7 +115,6 @@ if st.session_state.logged_in:
             st.plotly_chart(fig, use_container_width=True)
 
     with tabs[5]: # ROADMAP
-        st.header("📅 Performance Plan & Summary")
-        p_id = st.selectbox("Select Player", list(st.session_state.roadmap.keys()))
-        for entry in reversed(st.session_state.roadmap[p_id]):
+        st.header("📅 Historical Performance Plans")
+        for entry in reversed(st.session_state.roadmap["22"]):
             st.markdown(f"<div class='roadmap-card'><strong>{entry['date']} - {entry['category']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
