@@ -30,10 +30,16 @@ apply_elite_styling()
 # --- 2. DATA SAFETY & LOGIN ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
-# SAFE DATA INITIALIZATION: Prevents the KeyError seen in your screenshots
+# SAFE SQUAD INITIALIZATION
 if "profiles" not in st.session_state:
     st.session_state.profiles = {
-        "Player 1": {"medical": {"age": 24, "weight": 78.0, "risk": "Low"}, "roadmap": []}
+        "22": {
+            "first_name": "Vinícius", 
+            "last_name": "Júnior", 
+            "shirt_number": "7",
+            "medical": {"age": 25, "weight": 73.0, "risk": "Low"},
+            "roadmap": []
+        }
     }
 
 if not st.session_state.logged_in:
@@ -53,10 +59,11 @@ try:
     else: st.warning("⚠️ Secret missing: GEMINI_API_KEY")
 except Exception as e: st.error(f"AI Failed: {e}")
 
-# --- 4. COMMAND CENTER NAVIGATION ---
-tabs = st.tabs(["📊 Squad Overview", "🧬 Athlete Medical Hub", "🎥 AI Performance Audit", "📅 Performance Roadmap"])
+# --- 4. NAVIGATION ---
+# Added 'Squad' as the first management tab
+tabs = st.tabs(["📊 Squad Overview", "🏃 Squad Registry", "🧬 Athlete Medical Hub", "🎥 AI Performance Audit", "📅 Performance Roadmap"])
 
-with tabs[0]: # SQUAD OVERVIEW (ERROR-FREE VERSION)
+with tabs[0]: # SQUAD OVERVIEW
     st.header("🏆 Squad Performance Dashboard")
     c1, c2, c3 = st.columns(3)
     c1.markdown(f"<div class='kpi-card'>Active Athletes<br><span class='kpi-val'>{len(st.session_state.profiles)}</span></div>", unsafe_allow_html=True)
@@ -65,66 +72,7 @@ with tabs[0]: # SQUAD OVERVIEW (ERROR-FREE VERSION)
     
     st.divider()
     st.subheader("📋 Athlete Readiness Status")
-    # Table logic with safety defaults to prevent KeyErrors
-    squad_data = []
-    for name, data in st.session_state.profiles.items():
-        squad_data.append({
-            "Athlete": name,
-            "Age": data["medical"].get("age", "N/A"),
-            "Weight (kg)": data["medical"].get("weight", "N/A"),
-            "Injury Risk": data["medical"].get("risk", "N/A")
-        })
-    st.table(squad_data)
-
-with tabs[1]: # MEDICAL HUB & DIGITAL TWIN
-    st.header("🧬 Clinical Biometrics")
-    col_l, col_r = st.columns([1, 1.5])
-    
-    with col_l:
-        p_id = st.selectbox("Select Athlete", options=list(st.session_state.profiles.keys()), key="med_sel")
-        st.subheader(f"Update: {p_id}")
-        new_w = st.number_input("Weight (kg)", value=float(st.session_state.profiles[p_id]["medical"]["weight"]))
-        new_a = st.number_input("Age", value=int(st.session_state.profiles[p_id]["medical"]["age"]))
-        new_r = st.selectbox("Injury Risk", ["Low", "Medium", "High"], index=0)
-        if st.button("Sync Medical Data"):
-            st.session_state.profiles[p_id]["medical"].update({"weight": new_w, "age": new_a, "risk": new_r})
-            st.success("Synchronized.")
-
-    with col_r:
-        if os.path.exists("digital_twin.png"):
-            with open("digital_twin.png", "rb") as f_b: b64 = base64.b64encode(f_b.read()).decode()
-            fig = go.Figure()
-            fig.add_layout_image(dict(source=f"data:image/png;base64,{b64}", xref="x", yref="y", x=0, y=1000, sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"))
-            # CENTERED PINS (X=500) for your tall mannequin
-            fig.add_trace(go.Scatter(x=[500, 500], y=[235, 125], mode='markers+text', text=["ACL Stress", "Calf Fatigue"], textposition="middle right", marker=dict(size=40, color="#ff4b4b", line=dict(width=3, color='white'))))
-            fig.update_layout(width=600, height=700, paper_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]), margin=dict(t=0,b=0,l=0,r=0))
-            st.plotly_chart(fig, use_container_width=True)
-
-with tabs[2]: # ANALYSIS ENGINE
-    st.header("🎥 Shirt-Color Targeted Audit")
-    target_p = st.selectbox("Analyze Profile", options=list(st.session_state.profiles.keys()))
-    shirt = st.text_input("Shirt Color to Track", placeholder="e.g. Red shirt number 10")
-    vid = st.file_uploader("Upload Clip", type=['mp4', 'mov'])
-    
-    if vid and 'client' in locals():
-        st.video(vid)
-        if st.button("Execute Targeted Analysis"):
-            with st.status("🤖 Analyzing (Paid Tier)..."):
-                try:
-                    for f in client.files.list(): client.files.delete(name=f.name)
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
-                        tmp.write(vid.getvalue()); t_path = tmp.name
-                    upf = client.files.upload(file=t_path)
-                    while upf.state.name == "PROCESSING": time.sleep(2); upf = client.files.get(name=upf.name)
-                    prompt = f"Target player in {shirt}. Summarize performance and provide a 1-week plan."
-                    resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, upf])
-                    st.session_state.profiles[target_p]["roadmap"].append({"date": "2026-01-18", "note": resp.text})
-                    client.files.delete(name=upf.name); os.remove(t_path)
-                    st.success("✅ Audit Complete.")
-                except Exception as e: st.error(f"Failed: {e}")
-
-with tabs[3]: # ROADMAP
-    st.header("📅 Integrated Clinical Roadmap")
-    view_p = st.selectbox("View Roadmap", options=list(st.session_state.profiles.keys()))
-    for entry in reversed(st.session_state.profiles[view_p]["roadmap"]):
-        st.markdown(f"<div style='background:rgba(255,255,255,0.08); padding:20px; border-radius:15px; border-left:5px solid #00ab4e; margin-bottom:10px;'><strong>{entry['date']} Audit</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
+    squad_summary = []
+    for uid, data in st.session_state.profiles.items():
+        squad_summary.append({
+            "Shirt
