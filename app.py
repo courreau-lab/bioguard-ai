@@ -3,7 +3,8 @@ import plotly.graph_objects as go
 from google import genai
 import time, tempfile, os, base64
 
-# --- 1. THE VISIBILITY SHIELD & LUXURY STYLING ---
+# --- 1. GLOBAL UI & VISIBILITY SHIELD ---
+# Note: Increasing Streamlit's internal file limit to 1GB
 st.set_page_config(page_title="Elite Performance | Hub", layout="wide")
 
 def apply_platinum_styling():
@@ -54,7 +55,7 @@ apply_platinum_styling()
 # --- 2. DATA PERSISTENCE & LOGIN GATE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
-# MASTER REPOSITORY: Standardized structure prevents crashes seen in image_f85083.jpg
+# MASTER REPOSITORY: Standardized structure prevents crashes
 if "profiles" not in st.session_state:
     st.session_state.profiles = {
         "7": {
@@ -89,7 +90,7 @@ except Exception: pass
 tabs = st.tabs(["📊 Overview", "🏃 Squad Registry", "🩺 Medical Hub", "🤖 Virtual Coach", "🎥 Performance Audit", "📅 Roadmap"])
 p_options = {uid: f"#{d['shirt_number']} {d['first_name']} {d['last_name']}" for uid, d in st.session_state.profiles.items()}
 
-with tabs[0]: # OVERVIEW (Fixed Indentation from image_08a5db.png)
+with tabs[0]: # OVERVIEW
     st.header("🏆 Squad Status Dashboard")
     c1, c2, c3 = st.columns(3)
     c1.markdown(f"<div class='kpi-card'>Squad Size<br><span class='kpi-val'>{len(st.session_state.profiles)}</span></div>", unsafe_allow_html=True)
@@ -97,7 +98,7 @@ with tabs[0]: # OVERVIEW (Fixed Indentation from image_08a5db.png)
     c3.markdown("<div class='kpi-card'>System Tier<br><span class='kpi-val'>Paid</span></div>", unsafe_allow_html=True)
     st.divider()
     st.subheader("📋 Athlete Readiness Status")
-    # Safe table logic using .get() to prevent the KeyError crashes
+    # Safe table logic using .get() to prevent crashes
     ov_list = []
     for uid, data in st.session_state.profiles.items():
         med = data.get('medical', {})
@@ -143,13 +144,13 @@ with tabs[2]: # MEDICAL HUB
         if os.path.exists("digital_twin.png"):
             with open("digital_twin.png", "rb") as f_bin: b64 = base64.b64encode(f_bin.read()).decode()
             fig = go.Figure()
-            # Clean Syntax: Fixed dictionary keys to prevent ValueError seen in image_f85b6a.jpg
+            # Clean Syntax: Fixed dictionary keys to prevent ValueErrors
             fig.add_layout_image(dict(
                 source=f"data:image/png;base64,{b64}", 
                 xref="x", yref="y", x=0, y=1000, 
                 sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"
             ))
-            fig.add_trace(go.Scatter(x=[500, 500], y=[235, 125], mode='markers+text', text=["ACL Risk", "Calf Fatigue"], textposition="middle right", marker=dict(size=45, color="#ff4b4b", line=dict(width=3, color='white'))))
+            fig.add_trace(go.Scatter(x=[500, 500], y=[235, 125], mode='markers+text', text=["ACL Risk", "Calf Strain"], textposition="middle right", marker=dict(size=45, color="#ff4b4b", line=dict(width=3, color='white'))))
             fig.update_layout(width=700, height=800, paper_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]), margin=dict(t=0,b=0,l=0,r=0))
             st.plotly_chart(fig, use_container_width=True)
 
