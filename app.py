@@ -169,4 +169,33 @@ with tabs[3]: # VIRTUAL COACH (MM:SS Timestamps)
     vid_v = st.file_uploader("Upload Session Video", type=['mp4', 'mov'], key="coach_vid_up")
     if vid_v and 'client' in locals():
         st.video(vid_v)
-        if st.button("Generate Tactical Audit", key="gen
+        if st.button("Generate Tactical Audit", key="gen_coach_btn"):
+            with st.status("🤖 Analyzing metrics and timestamps..."):
+                try:
+                    for f in client.files.list(): client.files.delete(name=f.name)
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                        tmp.write(vid_v.getvalue()); t_path = tmp.name
+                    upf = client.files.upload(file=t_path)
+                    while upf.state.name == "PROCESSING": time.sleep(2); upf = client.files.get(name=upf.name)
+                    
+                    # PROMPT: Explicitly requests MM:SS timestamps for parent review
+                    prompt = f"""
+                    Target player shirt #{st.session_state.profiles[c_uid_v]['shirt_number']}.
+                    Analyze for Parent/Coach review:
+                    1. Technical KPIs: Touches, Good Passes, Bad Passes.
+                    2. Tactical Errors: Provide bold MM:SS timestamps for bad passes or poor positioning.
+                    3. Body Form: Monitor biomechanical efficiency and posture.
+                    """
+                    resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, upf])
+                    st.session_state.profiles[c_uid_v]["roadmap"].append({"date": "2026-01-19", "type": "Coach Session", "note": resp.text})
+                    st.success("Audit Archived."); st.rerun()
+                except Exception as e: st.error(f"Error: {e}")
+
+with tabs[5]: # ROADMAP
+    st.header("📅 Integrated Clinical & Tactical Roadmap")
+    r_uid_view = st.selectbox("View History For", options=list(p_options.keys()), format_func=lambda x: p_options[x], key="road_hub_sel")
+    if not st.session_state.profiles[r_uid_view]["roadmap"]:
+        st.info("No audit data yet. Add players and run a Coach or Performance Audit.")
+    else:
+        for entry in reversed(st.session_state.profiles[r_uid_view]["roadmap"]):
+            st.markdown(f"<div class='roadmap-card'><strong>{entry['date']} - {entry['type']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
