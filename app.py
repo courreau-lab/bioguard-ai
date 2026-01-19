@@ -69,29 +69,39 @@ with tabs[0]: # SQUAD OVERVIEW
         c1.markdown(f"<div class='kpi-card'>Squad Size<br><span class='kpi-val'>{len(st.session_state.profiles)}</span></div>", unsafe_allow_html=True)
         c2.markdown("<div class='kpi-card'>System Tier<br><span class='kpi-val'>Elite Paid</span></div>", unsafe_allow_html=True)
         st.divider()
-        st.table([{"Name": f"{d['first']} {d['last']}", "Team": d['team'], "Shirt": d['num'], "Risk": d['medical']['risk']} for d in st.session_state.profiles.values()])
+        # Safe table logic using .get() to prevent crashes shown in image_30362c.jpg
+        ov_data = []
+        for d in st.session_state.profiles.values():
+            ov_data.append({
+                "Name": f"{d.get('first', '')} {d.get('last', '')}",
+                "Team": d.get('team', 'N/A'),
+                "Shirt": d.get('num', 'N/A'),
+                "Risk": d.get('medical', {}).get('risk', 'N/A')
+            })
+        st.table(ov_data)
 
 with tabs[1]: # SQUAD REGISTRY (Saves Data Permanently)
     st.header("🏃 Athlete & Team Registration")
     with st.form("squad_reg_form", clear_on_submit=True):
         col1, col2 = st.columns(2)
-        f = col1.text_input("First Name")
-        l = col2.text_input("Last Name")
-        t = col1.text_input("Team Name (e.g. U15 Academy)")
-        n = col2.text_input("Shirt Number")
+        f_name = col1.text_input("First Name")
+        l_name = col2.text_input("Last Name")
+        team_name = col1.text_input("Team Name (e.g. U15 Academy)")
+        shirt_num = col2.text_input("Shirt Number")
         if st.form_submit_button("Save to My Squad"):
-            if f and l and n and t:
+            if f_name and l_name and shirt_num and team_name:
                 # Keyed by shirt number to prevent duplication
-                st.session_state.profiles[n] = {
-                    "first": f, "last": l, "num": n, "team": t,
+                st.session_state.profiles[shirt_num] = {
+                    "first": f_name, "last": l_name, "num": shirt_num, "team": team_name,
                     "medical": {"age": 0, "weight": 0.0, "risk": "Low"},
                     "roadmap": []
                 }
-                st.success(f"Successfully saved {f} to {t} squad."); st.rerun()
+                st.success(f"Successfully saved {f_name} to {team_name} squad."); st.rerun()
 
 with tabs[2]: # MEDICAL HUB
     st.header("🩺 Athlete Clinical Profile")
-    if not st.session_state.profiles: st.warning("Please register a member first."); st.stop()
+    if not st.session_state.profiles: 
+        st.warning("Please register a member first."); st.stop()
     
     # CHOOSE MEMBER FROM SQUAD
     p_choice = st.selectbox("Select Athlete", options=list(st.session_state.profiles.keys()), 
@@ -104,3 +114,54 @@ with tabs[2]: # MEDICAL HUB
         new_risk = st.selectbox("Current Risk Status", ["Low", "Medium", "High"], index=["Low", "Medium", "High"].index(player['medical']['risk']))
         if st.button("Update Clinical Data"):
             st.session_state.profiles[p_choice]['medical']['risk'] = new_risk
+            st.success("Synced."); st.rerun()
+            
+    with col_r:
+        if os.path.exists("digital_twin.png"):
+            with open("digital_twin.png", "rb") as f_bin: b64 = base64.b64encode(f_bin.read()).decode()
+            fig = go.Figure()
+            # Correcting sizey and source formatting for Plotly from image_f85b6a.jpg
+            fig.add_layout_image(dict(
+                source=f"data:image/png;base64,{b64}", 
+                xref="x", yref="y", x=0, y=1000, 
+                sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"
+            ))
+            fig.add_trace(go.Scatter(x=[500], y=[235], mode='markers', marker=dict(size=40, color="#ff4b4b")))
+            fig.update_layout(width=600, height=700, paper_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]), margin=dict(t=0,b=0,l=0,r=0))
+            st.plotly_chart(fig, use_container_width=True)
+
+
+with tabs[3]: # VIRTUAL COACH
+    st.header("🤖 Virtual Coach AI Assistant")
+    if not st.session_state.profiles: st.warning("Please register a member first."); st.stop()
+    
+    v_choice = st.selectbox("Analyze Performance For:", options=list(st.session_state.profiles.keys()), 
+                            format_func=lambda x: f"#{st.session_state.profiles[x]['num']} {st.session_state.profiles[x]['first']} - {st.session_state.profiles[x]['team']}", key="coach_sel")
+    vid = st.file_uploader("Upload Session Video", type=['mp4', 'mov'])
+    
+    if vid and 'client' in locals():
+        st.video(vid)
+        if st.button("Begin Technical & Tactical Audit"):
+            with st.status("🤖 Analyzing performance for parent review..."):
+                try:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                        tmp.write(vid.getvalue()); t_path = tmp.name
+                    upf = client.files.upload(file=t_path)
+                    while upf.state.name == "PROCESSING": time.sleep(2); upf = client.files.get(name=upf.name)
+                    
+                    prompt = f"Analyze shirt #{st.session_state.profiles[v_choice]['num']}. List technical KPIs and tactical errors with bold MM:SS timestamps."
+                    resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, upf])
+                    st.session_state.profiles[v_choice]["roadmap"].append({"date": "2026-01-19", "note": resp.text})
+                    st.success("Analysis Complete."); st.rerun()
+                except Exception as e: st.error(f"Error: {e}")
+
+
+with tabs[4]: # ROADMAP
+    st.header("📅 Historical Clinical & Tactical Roadmap")
+    if not st.session_state.profiles: st.warning("No data found."); st.stop()
+    
+    r_choice = st.selectbox("View Roadmap For:", options=list(st.session_state.profiles.keys()), 
+                            format_func=lambda x: f"#{st.session_state.profiles[x]['num']} {st.session_state.profiles[x]['first']}")
+    
+    for entry in reversed(st.session_state.profiles[r_choice].get("roadmap", [])):
+        st.markdown(f"<div class='roadmap-card'><strong>{entry['date']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
