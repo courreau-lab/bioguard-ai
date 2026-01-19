@@ -3,171 +3,104 @@ import plotly.graph_objects as go
 from google import genai
 import time, tempfile, os, base64
 
-# --- 1. GLOBAL VISIBILITY SHIELD ---
-st.set_page_config(page_title="Elite Performance | Command Center", layout="wide")
+# --- 1. PERFORMANCE CONFIGURATION ---
+st.set_page_config(page_title="Elite Command Center", layout="wide")
 
 def apply_platinum_styling():
     bg_img = "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=2000"
-    # Using double curly braces {{ }} to escape CSS within the f-string
     st.markdown(f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
-        
-        /* FORCE DARK THEME & WHITE TEXT EVERYWHERE */
-        html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, li {{
+        html, body, [class*="st-"], .stMarkdown, p, div, h1, h2, h3, h4, h5, h6, span, label, li {{
             font-family: 'Inter', sans-serif !important; color: #ffffff !important;
         }}
-        
-        /* ELITE GREEN LABELS */
         label {{ color: #00ab4e !important; font-weight: 700 !important; margin-bottom: 8px !important; }}
-
-        /* INPUT BOXES: TOTAL VISIBILITY FIX (Fixes 'White on White' bug) */
-        input, textarea, select, 
-        div[data-baseweb="input"], 
-        div[data-baseweb="select"], 
-        .stTextInput>div>div>input,
-        div[data-baseweb="base-input"] {{
-            background-color: #0c0c0c !important;
-            color: #ffffff !important;
-            border: 2px solid #00ab4e !important;
-            border-radius: 12px !important;
-            -webkit-text-fill-color: #ffffff !important;
+        
+        /* THE VISIBILITY SHIELD: FORCED DARK INPUTS */
+        input, textarea, select, div[data-baseweb="input"], div[data-baseweb="select"], 
+        .stTextInput>div>div>input, div[data-baseweb="base-input"] {{
+            background-color: #0a0a0a !important; color: #ffffff !important;
+            border: 2px solid #00ab4e !important; border-radius: 12px !important;
         }}
         
-        /* BACKGROUND */
         .stApp {{ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url("{bg_img}"); background-size: cover; background-attachment: fixed; }}
-        
-        /* CARDS */
         .kpi-card {{ background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; text-align: center; }}
         .kpi-val {{ color: #00ab4e; font-size: 2rem; font-weight: 700; }}
         .roadmap-card {{ background: rgba(255, 255, 255, 0.08); border-left: 5px solid #00ab4e; border-radius: 15px; padding: 20px; margin-bottom: 15px; }}
-        
-        button[data-baseweb="tab"] {{ background-color: transparent !important; border: none !important; }}
-        button[data-baseweb="tab"] div {{ color: #ffffff !important; font-weight: 700 !important; font-size: 1.1rem !important; }}
-        button[data-baseweb="tab"][aria-selected="true"] {{ border-bottom: 3px solid #00ab4e !important; }}
-
         .stButton>button {{ border-radius: 50px !important; border: 2px solid #00ab4e !important; background: rgba(0, 171, 78, 0.2) !important; font-weight: 700 !important; }}
     </style>
     """, unsafe_allow_html=True)
 
 apply_platinum_styling()
 
-# --- 2. DATA PERSISTENCE & LOGIN ---
+# --- 2. PERSISTENT DATA ENGINE ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
-
 if "profiles" not in st.session_state:
-    st.session_state.profiles = {
-        "7": {
-            "first_name": "Vinícius", "last_name": "Júnior", "shirt_number": "7",
-            "medical": {"age": 25, "weight": 73.0, "risk": "Low", "history": "ACL Rehab complete (2025)"},
-            "roadmap": []
-        }
-    }
+    st.session_state.profiles = {} # Storage for the full squad
 
-# MANUAL LOGIN GATE: Unique keys and empty defaults stop auto-fill bugs
+# --- 3. PERSISTENT LOGIN GATE ---
 if not st.session_state.logged_in:
     st.title("🛡️ ELITE COMMAND CENTER")
-    with st.form("manual_login"):
-        u = st.text_input("Username", value="", key="u_field_final")
-        p = st.text_input("Password", type="password", value="", key="p_field_final")
-        if st.form_submit_button("Unlock Portal"):
+    with st.form("persistent_login"):
+        u = st.text_input("Username", value="", key="u_field")
+        p = st.text_input("Password", type="password", value="", key="p_field")
+        if st.form_submit_button("Unlock Command Center"):
             if u == "admin" and p == "owner2026":
                 st.session_state.logged_in = True
-                st.rerun()
-            else:
-                st.error("Access Denied: Check manual entries.")
+                st.rerun() # Forces session state to lock in
+            else: st.error("Access Denied.")
     st.stop()
 
-# --- 3. AI CONNECTION ---
+# --- 4. AI CONNECTION ---
 try:
     if "GEMINI_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception: pass
 
-# --- 4. NAVIGATION ---
-tabs = st.tabs(["📊 Overview", "🏃 Squad Registry", "🩺 Medical Hub", "🤖 Virtual Coach", "🎥 Performance Audit", "📅 Roadmap"])
-p_options = {uid: f"#{d['shirt_number']} {d['first_name']} {d['last_name']}" for uid, d in st.session_state.profiles.items()}
+# --- 5. NAVIGATION HUB ---
+tabs = st.tabs(["📊 Overview", "🏃 Squad Registry", "🩺 Medical Hub", "🤖 Virtual Coach", "📅 Roadmap"])
 
-with tabs[0]: # OVERVIEW (Indentation Verified)
-    st.header("🏆 Squad Status Dashboard")
-    c1, c2, c3 = st.columns(3)
-    c1.markdown(f"<div class='kpi-card'>Squad Size<br><span class='kpi-val'>{len(st.session_state.profiles)}</span></div>", unsafe_allow_html=True)
-    c2.markdown("<div class='kpi-card'>Injury Risk Score<br><span class='kpi-val'>Low</span></div>", unsafe_allow_html=True)
-    c3.markdown("<div class='kpi-card'>AI System<br><span class='kpi-val'>Paid Tier</span></div>", unsafe_allow_html=True)
-    st.divider()
-    st.subheader("📋 Athlete Readiness Status")
-    status_list = []
-    for uid, d in st.session_state.profiles.items():
-        med = d.get('medical', {})
-        status_list.append({
-            "Athlete": f"#{d['shirt_number']} {d['first_name']}",
-            "Risk": med.get('risk', 'N/A'),
-            "Age": med.get('age', 'N/A')
-        })
-    st.table(status_list)
+with tabs[0]: # SQUAD OVERVIEW
+    st.header("🏆 Full Squad Status")
+    if not st.session_state.profiles:
+        st.info("No athletes registered yet. Go to Squad Registry to add your first member.")
+    else:
+        c1, c2 = st.columns(2)
+        c1.markdown(f"<div class='kpi-card'>Squad Size<br><span class='kpi-val'>{len(st.session_state.profiles)}</span></div>", unsafe_allow_html=True)
+        c2.markdown("<div class='kpi-card'>System Tier<br><span class='kpi-val'>Elite Paid</span></div>", unsafe_allow_html=True)
+        st.divider()
+        st.table([{"Name": f"{d['first']} {d['last']}", "Team": d['team'], "Shirt": d['num'], "Risk": d['medical']['risk']} for d in st.session_state.profiles.values()])
 
-with tabs[1]: # SQUAD REGISTRY
-    st.header("🏃 Athlete Master Registry")
-    with st.form("registry_master", clear_on_submit=True):
-        f_in, l_in, n_in = st.columns(3)
-        f = f_in.text_input("First Name")
-        l = l_in.text_input("Last Name")
-        n = n_in.text_input("Shirt Number")
-        if st.form_submit_button("Confirm Registration"):
-            if f and l and n:
+with tabs[1]: # SQUAD REGISTRY (Saves Data Permanently)
+    st.header("🏃 Athlete & Team Registration")
+    with st.form("squad_reg_form", clear_on_submit=True):
+        col1, col2 = st.columns(2)
+        f = col1.text_input("First Name")
+        l = col2.text_input("Last Name")
+        t = col1.text_input("Team Name (e.g. U15 Academy)")
+        n = col2.text_input("Shirt Number")
+        if st.form_submit_button("Save to My Squad"):
+            if f and l and n and t:
+                # Keyed by shirt number to prevent duplication
                 st.session_state.profiles[n] = {
-                    "first_name": f, "last_name": l, "shirt_number": n,
-                    "medical": {"age": 0, "weight": 0.0, "risk": "Low", "history": ""},
+                    "first": f, "last": l, "num": n, "team": t,
+                    "medical": {"age": 0, "weight": 0.0, "risk": "Low"},
                     "roadmap": []
                 }
-                st.success(f"Registered #{n}"); st.rerun()
+                st.success(f"Successfully saved {f} to {t} squad."); st.rerun()
 
 with tabs[2]: # MEDICAL HUB
     st.header("🩺 Athlete Clinical Profile")
-    p_uid_med = st.selectbox("Select Profile", options=list(p_options.keys()), format_func=lambda x: p_options[x], key="med_main")
+    if not st.session_state.profiles: st.warning("Please register a member first."); st.stop()
+    
+    # CHOOSE MEMBER FROM SQUAD
+    p_choice = st.selectbox("Select Athlete", options=list(st.session_state.profiles.keys()), 
+                            format_func=lambda x: f"#{st.session_state.profiles[x]['num']} {st.session_state.profiles[x]['first']} ({st.session_state.profiles[x]['team']})")
+    
     col_l, col_r = st.columns([1, 1.5])
     with col_l:
-        st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-        player = st.session_state.profiles[p_uid_med]
-        w_up = st.number_input("Weight (kg)", value=float(player["medical"].get("weight", 0.0)))
-        a_up = st.number_input("Age", value=int(player["medical"].get("age", 0)))
-        r_up = st.selectbox("Injury Risk Status", ["Low", "Medium", "High"])
-        if st.button("Sync Data"):
-            st.session_state.profiles[p_uid_med]["medical"].update({"weight": w_up, "age": a_up, "risk": r_up})
-            st.success("Synchronized."); st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-    with col_r:
-        if os.path.exists("digital_twin.png"):
-            with open("digital_twin.png", "rb") as f_bin: b64 = base64.b64encode(f_bin.read()).decode()
-            fig = go.Figure()
-            # ValueError Fix: sizey corrected
-            fig.add_layout_image(dict(source=f"data:image/png;base64,{b64}", xref="x", yref="y", x=0, y=1000, sizex=1000, sizey=1000, sizing="contain", opacity=0.9, layer="below"))
-            fig.add_trace(go.Scatter(x=[500, 500], y=[235, 125], mode='markers+text', text=["ACL Stress", "Calf Fatigue"], textposition="middle right", marker=dict(size=45, color="#ff4b4b", line=dict(width=3, color='white'))))
-            fig.update_layout(width=700, height=800, paper_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis=dict(visible=False, range=[0, 1000]), yaxis=dict(visible=False, range=[0, 1000]), margin=dict(t=0,b=0,l=0,r=0))
-            st.plotly_chart(fig, use_container_width=True)
-
-with tabs[3]: # VIRTUAL COACH (MM:SS Timestamps)
-    st.header("🤖 Virtual Coach AI Assistant")
-    c_uid = st.selectbox("Target Player", options=list(p_options.keys()), format_func=lambda x: p_options[x], key="coach_main")
-    vid = st.file_uploader("Upload Session Video", type=['mp4', 'mov'], key="coach_vid")
-    if vid and 'client' in locals():
-        st.video(vid)
-        if st.button("Generate Tactical Audit"):
-            with st.status("🤖 Analyzing performance..."):
-                try:
-                    for f in client.files.list(): client.files.delete(name=f.name)
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
-                        tmp.write(vid.getvalue()); t_path = tmp.name
-                    upf = client.files.upload(file=t_path)
-                    while upf.state.name == "PROCESSING": time.sleep(2); upf = client.files.get(name=upf.name)
-                    prompt = f"Target shirt #{st.session_state.profiles[c_uid]['shirt_number']}. Analyze technicals, tactical errors with MM:SS timestamps, and body form posture."
-                    resp = client.models.generate_content(model="gemini-2.0-flash-exp", contents=[prompt, upf])
-                    st.session_state.profiles[c_uid]["roadmap"].append({"date": "2026-01-19", "type": "Coach Session", "note": resp.text})
-                    st.success("Audit Archived."); st.rerun()
-                except Exception as e: st.error(f"Error: {e}")
-
-with tabs[5]: # ROADMAP
-    st.header("📅 Historical Clinical & Tactical Roadmap")
-    r_uid = st.selectbox("View History For", options=list(p_options.keys()), format_func=lambda x: p_options[x], key="road_main")
-    for entry in reversed(st.session_state.profiles[r_uid]["roadmap"]):
-        st.markdown(f"<div class='roadmap-card'><strong>{entry['date']} - {entry['type']}</strong><br>{entry['note']}</div>", unsafe_allow_html=True)
+        player = st.session_state.profiles[p_choice]
+        st.subheader(f"Biometrics: {player['first']}")
+        new_risk = st.selectbox("Current Risk Status", ["Low", "Medium", "High"], index=["Low", "Medium", "High"].index(player['medical']['risk']))
+        if st.button("Update Clinical Data"):
+            st.session_state.profiles[p_choice]['medical']['risk'] = new_risk
